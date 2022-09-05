@@ -2,12 +2,13 @@
 module tb_fake_psx();
 
     // Testbench variables
+    // All idle HIGH
     reg clk = 1;
-    reg data = 1;
-    reg ack = 1;
+    wire data;
+    wire ack;
     wire psx_clk;
-    wire cmd; // idle HIGH
-    wire att; // idle HIGH
+    wire cmd;
+    wire att;
 
     fake_psx PSX(
         .clk(clk),
@@ -18,11 +19,20 @@ module tb_fake_psx();
         .att(att)
     );
 
+    fake_controller CONT(
+        .psx_clk(psx_clk),
+        .cmd(cmd),
+        .att(att),
+        .clk(clk),
+        .data(data),
+        .ack(ack)
+    );
+
     always begin
         #7.25; clk = ~clk; // about 7kHz
     end
 
     initial begin
-        #100; $stop;
+        #500; $stop;
     end
 endmodule

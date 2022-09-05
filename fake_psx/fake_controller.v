@@ -14,18 +14,20 @@ module fake_controller
     input clk, // this is a fake input to drive the (usually analog) ack
     // NOTE: if using FPGA to emulate controller, this'll be the onboard
     // ... clock; normally this would be governed by an RC circuit
-    output reg data,
+    output data,
     output ack
 );
 
     reg [7:0] start_cmd;
     reg [7:0] request_data_cmd;
-    reg out_ack;
+    reg out_ack = 1'b1;
     reg [1:0] ack_dur;
-    reg [31:0] data_buffer;
+    reg [31:0] data_buffer = 32'hffffffff;
     integer byte_countdown;
+    reg out_data = 1'b1;
 
     assign ack = out_ack;
+    assign data = out_data;
 
     // this happens before anything else
     always @(negedge att) begin
@@ -50,7 +52,7 @@ module fake_controller
     always @(negedge psx_clk) begin
         // if start command has been received
         if (start_cmd == 8'h01) begin
-            data <= data_buffer[40 - byte_countdown];
+            out_data <= data_buffer[40 - byte_countdown];
         end
 
         byte_countdown <= byte_countdown - 1;
