@@ -34,7 +34,7 @@ module fake_controller
         start_cmd <= 8'h00;
         request_data_cmd <= 8'hff;
         out_ack <= 1'b1;
-        ack_dur <= 2'b00;
+        ack_dur <= 1'b0;
         data_buffer <= {FAKE_DATA2, FAKE_DATA1, 8'h5a, 8'h41};
         byte_countdown <= 40;
     end
@@ -70,9 +70,9 @@ module fake_controller
             ack_dur <= ack_dur + 1'b1;
         end
 
-        if (ack_dur == 2'b10) begin
+        if (ack_dur == 1'b1) begin
             out_ack <= 1'b1;
-            ack_dur <= 2'b00;
+            ack_dur <= 1'b0;
         end
     end
 endmodule
