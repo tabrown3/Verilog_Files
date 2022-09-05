@@ -5,7 +5,7 @@ module tb_fake_psx();
     reg clk = 1;
     reg data = 1;
     reg ack = 1;
-    wire psx_clock;
+    wire psx_clk;
     wire cmd; // idle HIGH
     wire att; // idle HIGH
 
@@ -13,7 +13,7 @@ module tb_fake_psx();
         .clk(clk),
         .data(data),
         .ack(ack),
-        .psx_clk(psx_clock),
+        .psx_clk(psx_clk),
         .cmd(cmd),
         .att(att)
     );
