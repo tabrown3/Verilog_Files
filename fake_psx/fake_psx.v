@@ -8,3 +8,23 @@ module fake_psx(
         // ... low for the duration of transmission
 );
 
+    reg [7:0] buttons;
+    reg [15:0] start_cmds
+    reg should_send_cmd;
+    integer cmd_countdown;
+
+    always @(posedge ack) begin
+        cmd_countdown <= 8;
+    end
+
+    always @(negedge clk) begin
+        if (att) begin
+            att <= 1'b0;
+            start_cmds <= 16'h0142;
+            cmd_countdown <= 8;
+        end else if (cmd_countdown > 0) begin
+            cmd <= start_cmds[0];
+            start_cmds <= {1'bx, start_cmds[15:1]};
+            cmd_countdown <= cmd_countdown - 1;
+        end
+    end
