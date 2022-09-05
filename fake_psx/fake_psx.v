@@ -11,16 +11,18 @@ module fake_psx(
     reg [23:0] data_store;
     reg [15:0] start_cmds
     integer byte_countdown;
+    reg wants_att = 1'b1;
 
     assign psx_clk = byte_countdown > 0 ? clk : 1'b1;
+    assign att = wants_att;
 
     always @(posedge ack) begin
         byte_countdown <= 8;
     end
 
     always @(negedge clk) begin
-        if (att) begin
-            att <= 1'b0;
+        if (wants_att) begin
+            wants_att <= 1'b0;
             start_cmds <= 16'h4201;
             byte_countdown <= 8;
             data_store <= 24'hxxxxxx
@@ -35,7 +37,7 @@ module fake_psx(
             if (data_store[0] == 1'bx) begin
                 byte_countdown <= byte_countdown - 1;
             end else begin
-                att <= 1'b1;
+                wants_att <= 1'b1;
             end
         end else if (!cmd) begin
             cmd <= 1'b1;
