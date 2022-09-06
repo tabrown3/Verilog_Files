@@ -33,6 +33,6 @@ module tb_fake_psx();
     end
 
     initial begin
-        #500; $stop;
+        #1000; $stop;
     end
 endmodule

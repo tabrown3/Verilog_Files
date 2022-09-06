@@ -22,7 +22,7 @@ module fake_controller
     reg [7:0] request_data_cmd;
     reg out_ack = 1'b1;
     reg [1:0] ack_dur;
-    reg [31:0] data_buffer = 32'hffffffff;
+    reg [39:0] data_buffer = 40'hffffffffff;
     integer byte_countdown;
     reg out_data = 1'b1;
 
@@ -35,7 +35,7 @@ module fake_controller
         request_data_cmd <= 8'hff;
         out_ack <= 1'b1;
         ack_dur <= 1'b0;
-        data_buffer <= {FAKE_DATA2, FAKE_DATA1, 8'h5a, 8'h41};
+        data_buffer <= {FAKE_DATA2, FAKE_DATA1, 8'h5a, 8'h41, 8'hff};
         byte_countdown <= 40;
     end
 
