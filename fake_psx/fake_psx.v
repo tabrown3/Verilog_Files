@@ -11,21 +11,21 @@ module fake_psx(
     // Internal variables
     reg out_att = 1'b1;
     reg out_cmd = 1'b1;
-    integer byte_countdown;
-    reg [15:0] start_cmds;
-    reg [4:0] start_cmd_bits_sent;
-    reg [23:0] data_store;
-    reg [4:0] data_bits_received;
+    integer byte_countdown = 8;
+    reg [15:0] start_cmds = 16'h4201; // 0x01 - start, 0x42 - send data
+    reg [4:0] start_cmd_bits_sent = 5'h00;
+    reg [23:0] data_store = 24'h000000;
+    reg [4:0] data_bits_received = 5'h00;
 
     assign att = out_att;
     assign cmd = out_cmd;
 
     always @(posedge clk) begin
-        if (ack && byte_countdown == 0) begin
-            byte_countdown <= 8;
-        end
-
         psx_clk <= 1'b1;
+    end
+
+    always @(posedge ack) begin
+        byte_countdown <= 8;
     end
 
     always @(negedge clk) begin
