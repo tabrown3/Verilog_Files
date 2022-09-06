@@ -58,7 +58,7 @@ module fake_controller
         byte_countdown <= byte_countdown - 1;
     end
 
-    always @(byte_countdown) begin
+    always @(posedge psx_clk) begin
         if (byte_countdown == 32 || byte_countdown == 24 ||
             byte_countdown == 16 || byte_countdown == 8) begin
             out_ack <= 1'b0;
