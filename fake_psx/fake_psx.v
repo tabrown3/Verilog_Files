@@ -33,7 +33,7 @@ module fake_psx(
             out_att <= 1'b0;
         end
 
-        if (byte_countdown > 0) begin
+        if (byte_countdown > 0 && !out_att) begin
             psx_clk <= 1'b0;
         end
     end
