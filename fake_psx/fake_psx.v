@@ -9,7 +9,7 @@ module fake_psx(
 );
 
     // Internal variables
-    reg wants_att = 1'b1;
+    reg out_att = 1'b1;
     reg out_cmd = 1'b1;
     integer byte_countdown;
     reg [15:0] start_cmds;
@@ -18,22 +18,31 @@ module fake_psx(
     reg [4:0] data_bits_received;
 
     assign psx_clk = byte_countdown > 0 ? clk : 1'b1;
-    assign att = wants_att;
+    assign att = out_att;
     assign cmd = out_cmd;
 
-    always @(posedge ack) begin // resets byte countdown on ack
-        byte_countdown <= 8;
+    always @(posedge clk) begin
+        if (ack && byte_countdown == 0) begin
+            byte_countdown <= 8;
+        end
     end
 
     always @(negedge clk) begin
-        if (wants_att) begin
-            wants_att <= 1'b0;
-            byte_countdown <= 8;
-            start_cmds <= 16'h4201; // 0x01 - start, 0x42 - send data
-            start_cmd_bits_sent <= 5'h00;
-            data_store <= 24'h000000;
-            data_bits_received <= 5'h00;
-        end else if (byte_countdown > 0) begin // this line waits for ack to reset the countdown
+        if (out_att) begin
+            out_att <= 1'b0;
+        end
+    end
+
+    always @(negedge out_att) begin
+        byte_countdown <= 8;
+        start_cmds <= 16'h4201; // 0x01 - start, 0x42 - send data
+        start_cmd_bits_sent <= 5'h00;
+        data_store <= 24'h000000;
+        data_bits_received <= 5'h00;
+    end
+
+    always @(negedge psx_clk) begin
+        if (byte_countdown > 0) begin // this line waits for ack to reset the countdown
             if (start_cmd_bits_sent < 16) begin
                 out_cmd <= start_cmds[0];
                 start_cmds <= {1'b1, start_cmds[15:1]};
@@ -45,11 +54,12 @@ module fake_psx(
                     out_cmd <= 1'b1;
                 end
                 data_store <= {data, data_store};
-                byte_countdown <= byte_countdown - 1;
                 data_bits_received <= data_bits_received + 1'b1;
             end else begin
-                wants_att <= 1'b1;
+                out_att <= 1'b1;
             end
+
+            byte_countdown <= byte_countdown - 1;
         end
     end
 endmodule
