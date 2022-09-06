@@ -2,7 +2,7 @@ module fake_psx(
     input clk, // original clock from the 50MHz -> PLL -> 7kHz
     input data, // serial data from controller
     input ack, // acknowledgement from controller
-    output psx_clk, // clock the psx uses to drive the controller
+    output reg psx_clk, // clock the psx uses to drive the controller
     output cmd, // psx uses cmd to command the controller to begin
     output att // psx should pull this low before commanding, and keep...
         // ... low for the duration of transmission
@@ -17,7 +17,6 @@ module fake_psx(
     reg [23:0] data_store;
     reg [4:0] data_bits_received;
 
-    assign psx_clk = byte_countdown > 0 ? clk : 1'b1;
     assign att = out_att;
     assign cmd = out_cmd;
 
@@ -25,11 +24,17 @@ module fake_psx(
         if (ack && byte_countdown == 0) begin
             byte_countdown <= 8;
         end
+
+        psx_clk <= 1'b1;
     end
 
     always @(negedge clk) begin
         if (out_att) begin
             out_att <= 1'b0;
+        end
+
+        if (byte_countdown > 0) begin
+            psx_clk <= 1'b0;
         end
     end
 
