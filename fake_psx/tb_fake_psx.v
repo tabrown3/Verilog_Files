@@ -1,4 +1,4 @@
-`timescale 10us/100ns
+`timescale 1us/10ns
 module tb_fake_psx();
 
     // Testbench variables
@@ -29,10 +29,10 @@ module tb_fake_psx();
     );
 
     always begin
-        #7.25; clk = ~clk; // about 7kHz
+        #2; clk = ~clk; // 2us per toggle, 4us period (~250kHz)
     end
 
     initial begin
-        #3000; $stop;
+        #590; $stop;
     end
 endmodule
