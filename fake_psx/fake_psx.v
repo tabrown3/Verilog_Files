@@ -60,11 +60,15 @@ module fake_psx(
                 end
                 data_store <= {data, data_store};
                 data_bits_received <= data_bits_received + 1'b1;
-            end else begin
-                out_att <= 1'b1;
             end
 
             byte_countdown <= byte_countdown - 1;
+        end
+    end
+
+    always @(posedge psx_clk) begin
+        if (start_cmd_bits_sent == 16 && data_bits_received == 24) begin
+            out_att <= 1'b1;
         end
     end
 endmodule
