@@ -20,21 +20,24 @@ module fake_psx(
     assign att = out_att;
     assign cmd = out_cmd;
 
-    always @(posedge clk) begin
-        psx_clk <= 1'b1;
-    end
-
     always @(posedge ack) begin
         byte_countdown <= 8;
     end
 
-    always @(negedge clk) begin
-        if (out_att) begin
-            out_att <= 1'b0;
-        end
+    always @(clk) begin
+        if (clk) begin
+            psx_clk <= 1'b1;
+            if (start_cmd_bits_sent == 16 && data_bits_received == 24) begin
+                out_att <= 1'b1;
+            end
+        end else begin
+            if (out_att) begin
+                out_att <= 1'b0;
+            end
 
-        if (byte_countdown > 0 && !out_att) begin
-            psx_clk <= 1'b0;
+            if (byte_countdown > 0 && !out_att) begin
+                psx_clk <= 1'b0;
+            end
         end
     end
 
@@ -63,12 +66,6 @@ module fake_psx(
             end
 
             byte_countdown <= byte_countdown - 1;
-        end
-    end
-
-    always @(posedge psx_clk) begin
-        if (start_cmd_bits_sent == 16 && data_bits_received == 24) begin
-            out_att <= 1'b1;
         end
     end
 endmodule
