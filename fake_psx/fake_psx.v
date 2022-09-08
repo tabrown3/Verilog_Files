@@ -16,15 +16,18 @@ module fake_psx(
     reg [4:0] start_cmd_bits_sent = 5'h00;
     reg [23:0] data_store = 24'h000000;
     reg [4:0] data_bits_received = 5'h00;
+    reg prev_ack = 1'b1;
 
     assign att = out_att;
     assign cmd = out_cmd;
 
-    always @(posedge ack) begin
-        byte_countdown <= 8;
-    end
-
     always @(clk) begin
+        prev_ack <= ack;
+
+        if (ack != prev_ack && ack) begin
+            byte_countdown <= 8;
+        end
+
         if (clk) begin
             psx_clk <= 1'b1;
             if (start_cmd_bits_sent == 16 && data_bits_received == 24) begin
