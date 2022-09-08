@@ -3,6 +3,7 @@ module tb_fake_psx();
 
     // Testbench variables
     // All idle HIGH
+    reg start_btn = 1;
     reg clk = 1;
     wire data;
     wire ack;
@@ -11,6 +12,7 @@ module tb_fake_psx();
     wire att;
 
     fake_psx PSX(
+        .start_btn(start_btn),
         .clk(clk),
         .data(data),
         .ack(ack),
@@ -33,6 +35,19 @@ module tb_fake_psx();
     end
 
     initial begin
+        #10; start_btn = 0;
+        #5; start_btn = 1;
+        #10; start_btn = 0;
+        #5; start_btn = 1;
+        #10; start_btn = 0;
+        #5; start_btn = 1;
+        #10; start_btn = 0;
+        #5; start_btn = 1;
+        #10; start_btn = 0;
+        #5; start_btn = 1;
+        #10; start_btn = 0;
+        #5; start_btn = 1;
+
         #590; $stop;
     end
 endmodule
