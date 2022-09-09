@@ -30,7 +30,7 @@ module fake_psx(
     assign psx_clk = out_psx_clk;
 
     always @(clk) begin // executes approx. every 2us
-        prev_power_btn <= power_btn;
+        prev_power_btn <= power_btn; // TODO: this can be replaced with a simple init flag
         if (power_btn) begin
             // i.e. initial clk after power on
             if (prev_power_btn != power_btn) begin
