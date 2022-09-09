@@ -34,8 +34,8 @@ module tb_fake_psx();
     end
 
     initial begin
-        #50; power_btn <= 1;
+        #500; power_btn <= 1;
 
-        #590; $stop;
+        #9000000; $stop; // 9 seconds
     end
 endmodule
