@@ -1,5 +1,5 @@
 module fake_psx(
-    input power_btn,
+    input power_btn, // 3.3v from power source to indicate "on"
     input clk, // original clock from the 50MHz -> PLL -> 7kHz
     input data, // serial data from controller
     input ack, // acknowledgement from controller
