@@ -1,5 +1,5 @@
 module fake_psx(
-    input start_btn,
+    input power_btn,
     input clk, // original clock from the 50MHz -> PLL -> 7kHz
     input data, // serial data from controller
     input ack, // acknowledgement from controller
@@ -19,18 +19,13 @@ module fake_psx(
     reg [23:0] data_store = 24'h000000;
     reg [4:0] data_bits_received = 5'h00;
     reg prev_ack = 1'b1;
-    integer clear_to_start = 0;
 
     assign att = out_att;
     assign cmd = out_cmd;
     assign psx_clk = out_psx_clk;
 
-    always @(negedge start_btn) begin
-        clear_to_start <= clear_to_start + 1;
-    end
-
     always @(clk) begin
-        if (clear_to_start > 5) begin
+        if (power_btn) begin
             prev_ack <= ack;
 
             if (ack != prev_ack && ack) begin
