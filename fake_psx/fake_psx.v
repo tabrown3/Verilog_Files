@@ -10,20 +10,20 @@ module fake_psx(
 );
 
     // Internal variables
-    reg out_att = 1'b0;
-    reg out_cmd = 1'b0;
-    reg out_psx_clk = 1'b0;
-    integer byte_countdown = 8;
-    reg [15:0] start_cmds = 16'h4201; // 0x01 - start, 0x42 - send data
-    reg [4:0] start_cmd_bits_sent = 5'h00;
-    reg [23:0] data_store = 24'h000000;
-    reg [4:0] data_bits_received = 5'h00;
-    reg prev_ack = 1'b1;
-    reg prev_power_btn = 1'b0;
+    reg out_att;
+    reg out_cmd;
+    reg out_psx_clk;
+    integer byte_countdown;
+    reg [15:0] start_cmds;
+    reg [4:0] start_cmd_bits_sent;
+    reg [23:0] data_store;
+    reg [4:0] data_bits_received;
+    reg prev_ack;
+    reg prev_power_btn;
 
     // From the moment power's turned on, it takes the PSX about 8.8 seconds
     // before it first queries the controller
-    time startup_delay = 4.4E6; // 8.8s/2us ~= 4.4E6
+    time startup_delay;
 
     assign att = out_att;
     assign cmd = out_cmd;
@@ -34,14 +34,25 @@ module fake_psx(
         if (power_btn) begin
             // i.e. initial clk after power on
             if (prev_power_btn != power_btn) begin
-                out_att = 1'b1;
-                out_cmd = 1'b1;
-                out_psx_clk = 1'b1;
+                out_att <= 1'b1;
+                out_cmd <= 1'b1;
+                out_psx_clk <= 1'b1;
+                byte_countdown <= 8;
+                start_cmds <= 16'h4201; // 0x01 - start, 0x42 - send data
+                start_cmd_bits_sent <= 5'h00;
+                data_store <= 24'h000000;
+                data_bits_received <= 5'h00;
+                prev_ack <= 1'b1;
+                prev_power_btn <= 1'b0;
+
+                // From the moment power's turned on, it takes the PSX about 8.8 seconds
+                // before it first queries the controller
+                startup_delay <= 4.4E6; // 8.8s/2us ~= 4.4E6
             end
 
-            if (startup_delay > 0) begin
+            if (startup_delay) begin
                 startup_delay <= startup_delay - 1;
-            end else begin
+            end else if (startup_delay == 0) begin
                 prev_ack <= ack;
 
                 // i.e. posedge ack
