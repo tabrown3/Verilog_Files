@@ -24,7 +24,6 @@ module fake_controller
     reg [7:0] data3;
     reg [7:0] data4;
 
-    reg [2:0] bit_counter;
     reg [6:0] total_bit_counter;
     reg [2:0] ack_count;
 
@@ -37,7 +36,6 @@ module fake_controller
             data1 <= {data2[0], data1[7:1]};
             data0 <= {data1[0], data0[7:1]};
             data <= data0[0];
-            bit_counter <= bit_counter - 1;
             total_bit_counter <= total_bit_counter - 1;
         end else begin // acts as the register reset
             data0 <= 8'hff;
@@ -46,7 +44,6 @@ module fake_controller
             data3 <= FAKE_DATA1;
             data4 <= FAKE_DATA2;
             data <= 1'b1;
-            bit_counter <= 3'b111;
             total_bit_counter <= 7'd40;
         end
     end
@@ -54,15 +51,17 @@ module fake_controller
     always @(negedge clk) begin
         if (total_bit_counter == 40) begin
             ack <= 1'b1;
-            ack_count <= 0;
-        end else if (!att && bit_counter == 7 && ack_count < 4) begin
-            @(negedge clk);
-            @(negedge clk);
-            @(negedge clk);
-            ack <= 1'b0;
-            @(negedge clk);
-            ack <= 1'b1;
-            ack_count <= ack_count + 1;
+            ack_count <= 4;
+        end else if (!att && (total_bit_counter == 32 || total_bit_counter == 24 ||
+            total_bit_counter == 16 || total_bit_counter == 8)) begin
+            if (total_bit_counter >> 3 == ack_count) begin // total_bit_counter / 8
+                @(negedge clk);
+                @(negedge clk);
+                ack <= 1'b0;
+                @(negedge clk);
+                ack <= 1'b1;
+                ack_count <= ack_count - 1;
+            end
         end
     end
 endmodule
