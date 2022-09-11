@@ -19,7 +19,10 @@ module tb_fake_controller();
         .ack(ack)
     );
 
-    always begin
-        #2; clk = ~clk; // 2us per toggle, 4us period (~250kHz)
+    initial begin
+        #11000000;
+        while(1) begin
+            #2; clk = ~clk; // 2us per toggle, 4us period (~250kHz)
+        end
     end
 endmodule
