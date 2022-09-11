@@ -4,7 +4,7 @@ module import_saleae_data(
     output reg cmd,
     output reg att
 );
-    localparam LINE_CNT = 118;
+    localparam LINE_CNT = 352;
     real elapsed_time [LINE_CNT-1:0];
     reg psx_clk_arr [LINE_CNT-1:0];
     reg cmd_arr [LINE_CNT-1:0];
@@ -12,7 +12,7 @@ module import_saleae_data(
     integer in_file, i;
 
     initial begin
-        in_file = $fopen("real_psx_export.csv", "r");
+        in_file = $fopen("three_polls_from_start.csv", "r");
 
         for (i = 0; i < LINE_CNT; i = i + 1) begin
             //Time [s],PSX Clk,Cmd,Att
