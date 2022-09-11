@@ -26,6 +26,7 @@ module fake_controller
 
     reg [2:0] bit_counter;
     reg [6:0] total_bit_counter;
+    reg [2:0] ack_count;
 
     always @(negedge psx_clk or negedge att)
     begin: SHIFT_REGISTER // SISO w/ preload and async reset
@@ -50,16 +51,18 @@ module fake_controller
         end
     end
 
-    always @(*) begin
+    always @(negedge clk) begin
         if (total_bit_counter == 40) begin
             ack <= 1'b1;
-        end else if (!att && bit_counter == 7 && total_bit_counter != 0) begin
+            ack_count <= 0;
+        end else if (!att && bit_counter == 7 && ack_count < 4) begin
             @(negedge clk);
             @(negedge clk);
             @(negedge clk);
             ack <= 1'b0;
             @(negedge clk);
             ack <= 1'b1;
+            ack_count <= ack_count + 1;
         end
     end
 endmodule
