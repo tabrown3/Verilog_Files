@@ -26,7 +26,6 @@ module fake_controller
 
     reg [6:0] total_bit_counter;
     reg [2:0] ack_count;
-    reg ack_dur;
     reg should_ack;
 
     always @(negedge psx_clk or negedge att)
@@ -58,7 +57,6 @@ module fake_controller
         end else if (!att && (total_bit_counter == 32 || total_bit_counter == 24 ||
             total_bit_counter == 16 || total_bit_counter == 8)) begin
             if (total_bit_counter >> 3 == ack_count) begin // total_bit_counter / 8
-                ack_dur <= 1;
                 ack_count <= ack_count - 1;
                 should_ack <= 1;
             end
@@ -67,9 +65,7 @@ module fake_controller
         if (should_ack) begin
             if (ack) begin
                 ack <= 1'b0;
-            end else if (ack_dur > 0) begin
-                ack_dur <= ack_dur - 1;
-            end else if (ack_dur == 0 && !ack) begin
+            end else begin
                 ack <= 1'b1;
                 should_ack <= 0;
             end
