@@ -28,17 +28,9 @@ module fake_controller
     reg [2:0] ack_count;
     reg should_ack;
 
-    always @(negedge psx_clk or negedge att)
+    always @(negedge psx_clk or posedge att)
     begin: SHIFT_REGISTER // SISO w/ preload and async reset
-        if (!psx_clk) begin
-            data4 <= {1'b1, data4[7:1]};
-            data3 <= {data4[0], data3[7:1]};
-            data2 <= {data3[0], data2[7:1]};
-            data1 <= {data2[0], data1[7:1]};
-            data0 <= {data1[0], data0[7:1]};
-            data <= data0[0];
-            total_bit_counter <= total_bit_counter - 1;
-        end else begin // acts as the register reset
+        if (att) begin
             data0 <= 8'hff;
             data1 <= 8'h41;
             data2 <= 8'h5a;
@@ -46,6 +38,14 @@ module fake_controller
             data4 <= FAKE_DATA2;
             data <= 1'b1;
             total_bit_counter <= 7'd40;
+        end else begin // acts as the register reset
+            data4 <= {1'b1, data4[7:1]};
+            data3 <= {data4[0], data3[7:1]};
+            data2 <= {data3[0], data2[7:1]};
+            data1 <= {data2[0], data1[7:1]};
+            data0 <= {data1[0], data0[7:1]};
+            data <= data0[0];
+            total_bit_counter <= total_bit_counter - 1;
         end
     end
 
