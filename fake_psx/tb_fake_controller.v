@@ -12,7 +12,6 @@ module tb_fake_controller();
 
     fake_controller CONT(
         .psx_clk(psx_clk),
-        .cmd(cmd),
         .att(att),
         .clk(clk),
         .data(data),
