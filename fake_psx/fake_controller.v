@@ -23,9 +23,12 @@ module fake_controller
     reg [7:0] data3;
     reg [7:0] data4;
 
-    reg [5:0] total_bit_counter;
     reg [2:0] ack_count;
     reg should_ack;
+
+    wire [5:0] total_bit_counter;
+
+    six_bit_counter CNT0(.clk(psx_clk), .reset(att), .count(total_bit_counter));
 
     always @(negedge psx_clk or posedge att)
     begin: SHIFT_REGISTER // SISO w/ preload and async reset
@@ -36,7 +39,6 @@ module fake_controller
             data3 <= FAKE_DATA1;
             data4 <= FAKE_DATA2;
             data <= 1'b1;
-            total_bit_counter <= 6'd0;
         end else begin // acts as the register reset
             data4 <= {1'b1, data4[7:1]};
             data3 <= {data4[0], data3[7:1]};
@@ -44,12 +46,11 @@ module fake_controller
             data1 <= {data2[0], data1[7:1]};
             data0 <= {data1[0], data0[7:1]};
             data <= data0[0];
-            total_bit_counter <= total_bit_counter + 6'd1;
         end
     end
 
     always @(negedge clk) begin
-        if (total_bit_counter == 6'd0) begin
+        if (total_bit_counter == 0) begin
             ack <= 1'b1;
             ack_count <= 1;
             should_ack <= 0;
