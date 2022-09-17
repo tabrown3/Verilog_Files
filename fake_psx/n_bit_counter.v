@@ -5,7 +5,7 @@ module n_bit_counter
 (
     input clk,
     input reset,
-    output reg [BIT_COUNT - 1:0] count
+    output reg [BIT_COUNT - 1:0] count = 0
 );
 
     always @(negedge clk or posedge reset) begin

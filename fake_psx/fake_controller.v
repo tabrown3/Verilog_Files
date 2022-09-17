@@ -27,8 +27,10 @@ module fake_controller
     reg should_ack;
 
     wire [5:0] total_bit_counter;
+    wire [3:0] ack_delay;
 
     n_bit_counter #(.BIT_COUNT(6)) CNT0(.clk(psx_clk), .reset(att), .count(total_bit_counter));
+    n_bit_counter #(.BIT_COUNT(4)) CNT1(.clk(clk), .reset(!should_ack), .count(ack_delay));
 
     always @(negedge psx_clk or posedge att)
     begin: SHIFT_REGISTER // SISO w/ preload and async reset
@@ -63,9 +65,9 @@ module fake_controller
         end
 
         if (should_ack) begin
-            if (ack) begin
+            if (ack && ack_delay > 4'd2) begin
                 ack <= 1'b0;
-            end else begin
+            end else if (!ack) begin
                 ack <= 1'b1;
                 should_ack <= 0;
             end
