@@ -28,7 +28,7 @@ module fake_controller
 
     wire [5:0] total_bit_counter;
 
-    six_bit_counter CNT0(.clk(psx_clk), .reset(att), .count(total_bit_counter));
+    n_bit_counter #(.BIT_COUNT(6)) CNT0(.clk(psx_clk), .reset(att), .count(total_bit_counter));
 
     always @(negedge psx_clk or posedge att)
     begin: SHIFT_REGISTER // SISO w/ preload and async reset

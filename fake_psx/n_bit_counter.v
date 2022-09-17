@@ -1,7 +1,11 @@
-module six_bit_counter(
+module n_bit_counter
+#(
+    parameter BIT_COUNT = 6
+)
+(
     input clk,
     input reset,
-    output reg [5:0] count
+    output reg [BIT_COUNT - 1:0] count
 );
 
     always @(negedge clk or posedge reset) begin
