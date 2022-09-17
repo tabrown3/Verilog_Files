@@ -1,7 +1,7 @@
 module six_bit_counter(
     input clk,
     input reset,
-    output [5:0] count
+    output reg [5:0] count
 );
 
     always @(negedge clk or posedge reset) begin
