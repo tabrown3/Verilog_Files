@@ -1,18 +1,19 @@
 module fake_controller
-#(
+// #(
     //        Bit0 Bit1 Bit2 Bit3 Bit4 Bit5 Bit6 Bit7
     // DATA1: SLCT           STRT UP   RGHT DOWN LEFT
     // DATA1: L2   R2    L1  R1   /\   O    X    |_|
     // source https://gamesx.com/controldata/psxcont/psxcont.htm#CIRCUIT
-    parameter FAKE_DATA1 = 8'b01111111, // Pressed left on d-pad, reversed
-    parameter FAKE_DATA2 = 8'b11111111 // Square thru L2 left unpressed
-    // paremeters should be removed before emulating controller
-)(
+    // parameter FAKE_DATA1 = 8'b01111111, // Pressed left on d-pad, reversed
+    // parameter FAKE_DATA2 = 8'b11111111 // Square thru L2 left unpressed
+// )
+(
     input psx_clk,
     input att,
     input clk, // this is a fake input to drive the (usually analog) ack
     // NOTE: if using FPGA to emulate controller, this'll be the onboard
     // ... clock; normally this would be governed by an RC circuit
+    input [1:0] d_btn,
     output reg data,
     output reg ack
 );
@@ -38,8 +39,8 @@ module fake_controller
             data0 <= 8'hff;
             data1 <= 8'h41;
             data2 <= 8'h5a;
-            data3 <= FAKE_DATA1;
-            data4 <= FAKE_DATA2;
+            data3 <= {d_btn[0], 1'b1, d_btn[1], 5'b11111};
+            data4 <= 8'b11111111;
             data <= 1'b1;
         end else begin // acts as the register reset
             data4 <= {1'b1, data4[7:1]};

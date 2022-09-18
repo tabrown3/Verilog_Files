@@ -3,6 +3,7 @@ module tb_fake_controller();
     wire psx_clk, cmd, att;
     wire data, ack;
     reg clk = 0;
+    reg [1:0] d_btn = 2'b00;
 
     import_saleae_data PSX0(
         .psx_clk(psx_clk),
@@ -14,6 +15,7 @@ module tb_fake_controller();
         .psx_clk(psx_clk),
         .att(att),
         .clk(clk),
+        .d_btn(d_btn),
         .data(data),
         .ack(ack)
     );
