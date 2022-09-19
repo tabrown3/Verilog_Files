@@ -3,20 +3,19 @@ module async_to_sync(
     input data,
     input sample_clk,
     input reset,
+    input enable,
     output reg derived_signal = 1'b1,
     output reg derived_clk = 1'b1
 );
     localparam STATE_SIZE = 4; // bits
     // STATES
-    localparam [STATE_SIZE-1:0] AWAITING_POWER_UP = {STATE_SIZE{1'b0}};
-    localparam [STATE_SIZE-1:0] AWAITING_FIRST_BIT = {{STATE_SIZE - 1{1'b0}}, 1'b1};
-    localparam [STATE_SIZE-1:0] READING_BIT_LOW = {{STATE_SIZE - 2{1'b0}}, 2'b10};
-    localparam [STATE_SIZE-1:0] READING_BIT_HIGH = {{STATE_SIZE - 2{1'b0}}, 2'b11};
-    localparam [STATE_SIZE-1:0] POST_RESET = {{STATE_SIZE - 3{1'b0}}, 3'b100};
+    localparam [STATE_SIZE-1:0] AWAITING_FIRST_BIT = {STATE_SIZE{1'b0}};
+    localparam [STATE_SIZE-1:0] READING_BIT_LOW = {{STATE_SIZE - 1{1'b0}}, 1'b1};
+    localparam [STATE_SIZE-1:0] READING_BIT_HIGH = {{STATE_SIZE - 2{1'b0}}, 2'b10};
     // END STATES
 
     // CURRENT STATE
-    reg [STATE_SIZE-1:0] cur_state = AWAITING_POWER_UP;
+    reg [STATE_SIZE-1:0] cur_state = AWAITING_FIRST_BIT;
     reg low_cnt_clk = 1'b1;
     reg high_cnt_clk = 1'b1;
     wire [5:0] low_cnt;
@@ -35,16 +34,15 @@ module async_to_sync(
             reset_low_cnt <= 1'b1;
             reset_high_cnt <= 1'b1;
             low_cnt_latch <= 6'h00;
-            cur_state <= POST_RESET;
-        end else begin
+            cur_state <= AWAITING_FIRST_BIT;
+        end else if (enable) begin
             case (cur_state)
-                AWAITING_POWER_UP: begin
-                    if (!sample_clk && data) cur_state <= AWAITING_FIRST_BIT;
-                end
                 AWAITING_FIRST_BIT: begin
                     if (!sample_clk && !data) begin
                         cur_state <= READING_BIT_LOW;
                         low_cnt_clk <= sample_clk;
+                        reset_low_cnt <= 1'b0;
+                        reset_high_cnt <= 1'b0;
                     end
                 end
                 READING_BIT_LOW: begin
@@ -79,13 +77,7 @@ module async_to_sync(
                         high_cnt_clk <= sample_clk;
                     end
                 end
-                POST_RESET: begin
-                    reset_low_cnt <= 1'b0;
-                    reset_high_cnt <= 1'b0;
-                    cur_state <= READING_BIT_LOW;
-                end
             endcase
         end
     end
-
 endmodule
