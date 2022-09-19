@@ -1,4 +1,4 @@
-`timescale 100ns/10ns // 10MHz, #5 is 2MHz
+`timescale 100ns/10ns // 10MHz, #2.5 is 4MHz
 module tb_fake_n64_controller();
 
     wire data;
@@ -18,7 +18,7 @@ module tb_fake_n64_controller();
         sample_clk = 1;
         #26700000;
         while(1) begin
-            #5; // 500ns - 2MHz
+            #2.5; // 250ns - 4MHz
             sample_clk = ~sample_clk;
         end
     end
