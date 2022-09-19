@@ -2,7 +2,7 @@
 module import_saleae_n64_data(
     output reg data
 );
-    localparam LINE_CNT = 46087;
+    localparam LINE_CNT = 668;
     real elapsed_time [LINE_CNT-1:0];
     reg data_arr [LINE_CNT-1:0];
     reg cmd_arr [LINE_CNT-1:0];
@@ -10,7 +10,7 @@ module import_saleae_n64_data(
     integer in_file, i;
 
     initial begin
-        in_file = $fopen("n64_real_data.csv", "r");
+        in_file = $fopen("n64_console_data.csv", "r");
 
         for (i = 0; i < LINE_CNT; i = i + 1) begin
             //Time [s], Data
