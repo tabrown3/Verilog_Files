@@ -20,10 +20,12 @@ module async_to_sync(
     reg high_cnt_clk = 1'b1;
     wire [5:0] low_cnt;
     wire [5:0] high_cnt;
-    reg reset_cnt = 1'b0;
+    reg reset_low_cnt = 1'b0;
+    reg reset_high_cnt = 1'b0;
+    reg [5:0] low_cnt_latch = 6'h00;
 
-    n_bit_counter LOW_CNT0(.clk(low_cnt_clk), .reset(reset_cnt), .count(low_cnt));
-    n_bit_counter HIGH_CNT0(.clk(high_cnt_clk), .reset(reset_cnt), .count(high_cnt));
+    n_bit_counter LOW_CNT0(.clk(low_cnt_clk), .reset(reset_low_cnt), .count(low_cnt));
+    n_bit_counter HIGH_CNT0(.clk(high_cnt_clk), .reset(reset_high_cnt), .count(high_cnt));
 
     always @(edge sample_clk) begin
         case (cur_state)
@@ -38,23 +40,29 @@ module async_to_sync(
             end
             READING_BIT_LOW: begin
                 if (!sample_clk && data) begin
-                    cur_state <= READING_BIT_HIGH;
+                    reset_high_cnt <= 1'b0;
                     high_cnt_clk <= sample_clk;
+                    cur_state <= READING_BIT_HIGH;
+
+                    low_cnt_latch <= low_cnt;
+                    reset_low_cnt <= 1'b1;
                 end else begin
                     low_cnt_clk <= sample_clk;
                     if (!derived_clk) begin
                         derived_clk <= 1'b1;
-                        reset_cnt <= 1'b0;
                     end
                 end
             end
             READING_BIT_HIGH: begin
                 // TODO: Need check for bit count in here - if 8 bits, do something fun
                 if (!sample_clk && !data) begin
+                    reset_low_cnt <= 1'b0;
+                    low_cnt_clk <= sample_clk;
                     cur_state <= READING_BIT_LOW;
+
                     derived_clk <= 1'b0;
-                    reset_cnt <= 1'b1;
-                    if (low_cnt > high_cnt) begin
+                    reset_high_cnt <= 1'b1;
+                    if (low_cnt_latch > high_cnt) begin
                         derived_signal <= 1'b0;
                     end else begin
                         derived_signal <= 1'b1;
