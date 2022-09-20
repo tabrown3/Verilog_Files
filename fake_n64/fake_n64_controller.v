@@ -7,8 +7,9 @@ module fake_n64_controller(
     localparam STATE_SIZE = 4; // bits
     // STATES
     localparam [STATE_SIZE-1:0] AWAITING_CMD = {STATE_SIZE{1'b0}};
-    localparam [STATE_SIZE-1:0] PROCESSING_CMD = {{STATE_SIZE - 1{1'b0}}, 1'b1};
-    localparam [STATE_SIZE-1:0] EXECUTING_CMD = {{STATE_SIZE - 2{1'b0}}, 2'b10};
+    localparam [STATE_SIZE-1:0] RESPONDING_TO_INFO = {{STATE_SIZE - 1{1'b0}}, 1'b1};
+    localparam [STATE_SIZE-1:0] RESPONDING_TO_STATUS = {{STATE_SIZE - 2{1'b0}}, 2'b10};
+    localparam [STATE_SIZE-1:0] READING_ADDRESS = {{STATE_SIZE - 2{1'b0}}, 2'b11};
 
     reg [STATE_SIZE-1:0] cur_state = AWAITING_CMD;
     reg reset = 1'b0;
@@ -17,6 +18,7 @@ module fake_n64_controller(
     reg bit_cnt_clk = 1'b1;
     reg bit_cnt_reset = 1'b0;
     reg [5:0] bit_cnt = 6'h00;
+    reg [15:0] address;
 
     n_bit_counter BIT_CNT0(.clk(bit_cnt_clk), .reset(bit_cnt_reset), .count(bit_cnt));
 
@@ -33,45 +35,39 @@ module fake_n64_controller(
         case (cur_state)
             AWAITING_CMD: begin
                 if (!derived_clk) begin
-                    cmd[6'h07 - bit_cnt] <= derived_signal;
-                    if (bit_cnt == 6'h07) begin
-                        cur_state <= PROCESSING_CMD;
+                    if (bit_cnt == 6'h08) begin
+                        case (cmd)
+                            8'h00, 8'hff: begin // INFO, RESET
+                                if (!derived_clk) begin
+                                    bit_cnt_reset <= 1'b1;
+                                    reset <= 1'b1;
+                                    cur_state <= RESPONDING_TO_INFO;
+                                end
+                            end
+                            8'h01: begin // BUTTON STATUS
+                                if (!derived_clk) begin
+                                    bit_cnt_reset <= 1'b1;
+                                    reset <= 1'b1;
+                                    cur_state <= RESPONDING_TO_STATUS;
+                                end
+                            end
+                            8'h02, 8'h03: begin // READ, WRITE
+                                if (!derived_clk) begin
+                                    address[6'h17 - bit_cnt] <= derived_signal; // 23 - bit cnt
+                                    cur_state <= READING_ADDRESS;
+                                end
+                            end
+                        endcase
+                    end else begin
+                        cmd[6'h07 - bit_cnt] <= derived_signal;
                     end
                 end
             end
-            PROCESSING_CMD: begin
-                case (cmd)
-                    8'h00, 8'hff: begin // INFO, RESET
-                        if (!derived_clk) begin
-                            bit_cnt_reset <= 1'b1;
-                            reset <= 1'b1;
-                        end
-                    end
-                    8'h01: begin // BUTTON STATUS
-                        if (!derived_clk) begin
-                            bit_cnt_reset <= 1'b1;
-                            reset <= 1'b1;
-                        end
-                    end
-                    8'h02: begin // READ
-                    end
-                    8'h03: begin // WRITE
-                    end
-                endcase
+            RESPONDING_TO_INFO: begin
             end
-            EXECUTING_CMD: begin
-                case (cmd)
-                    8'h00: begin // INFO
-                    end
-                    8'h01: begin // BUTTON STATUS
-                    end
-                    8'h02: begin // READ
-                    end
-                    8'h03: begin // WRITE
-                    end
-                    8'hff: begin // RESET and INFO
-                    end
-                endcase
+            RESPONDING_TO_STATUS: begin
+            end
+            READING_ADDRESS: begin
             end
         endcase
     end
