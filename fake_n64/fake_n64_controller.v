@@ -24,8 +24,6 @@ module fake_n64_controller(
     async_to_sync SYNC0(
         .data(data),
         .sample_clk(sample_clk),
-        .reset(reset),
-        .enable(enable),
         .derived_signal(derived_signal),
         .derived_clk(derived_clk)
     );
@@ -39,14 +37,12 @@ module fake_n64_controller(
                             8'h00, 8'hff: begin // INFO, RESET
                                 if (!derived_clk) begin
                                     bit_cnt_reset <= 1'b1;
-                                    reset <= 1'b1;
                                     cur_state <= RESPONDING_TO_INFO;
                                 end
                             end
                             8'h01: begin // BUTTON STATUS
                                 if (!derived_clk) begin
                                     bit_cnt_reset <= 1'b1;
-                                    reset <= 1'b1;
                                     cur_state <= RESPONDING_TO_STATUS;
                                 end
                             end
@@ -63,8 +59,14 @@ module fake_n64_controller(
                 end
             end
             RESPONDING_TO_INFO: begin
+                if (!derived_clk) begin
+                    bit_cnt_reset <= 1'b0;
+                end
             end
             RESPONDING_TO_STATUS: begin
+                if (!derived_clk) begin
+                    bit_cnt_reset <= 1'b0;
+                end
             end
             READING_ADDRESS: begin
             end
