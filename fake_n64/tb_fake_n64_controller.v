@@ -1,17 +1,15 @@
 `timescale 100ns/10ns // 10MHz, #2.5 is 4MHz
 module tb_fake_n64_controller();
 
-    wire data;
-    import_saleae_n64_data FILE0(.data(data));
+    wire console_data;
+    import_saleae_n64_data FILE0(.data(console_data));
 
     reg sample_clk;
-    wire derived_signal;
-    wire derived_clk;
+    wire controller_data;
     fake_n64_controller N64_CONT0(
-        .data(data),
+        .data_rx(console_data),
         .sample_clk(sample_clk),
-        .derived_signal(derived_signal),
-        .derived_clk(derived_clk)
+        .data_tx(controller_data)
     );
 
     initial begin

@@ -1,8 +1,7 @@
 module fake_n64_controller(
-    input data,
+    input data_rx,
     input sample_clk,
-    output derived_signal,
-    output derived_clk
+    output data_tx
 );
     localparam STATE_SIZE = 4; // bits
     // STATES
@@ -12,8 +11,8 @@ module fake_n64_controller(
     localparam [STATE_SIZE-1:0] READING_ADDRESS = {{STATE_SIZE - 2{1'b0}}, 2'b11};
 
     reg [STATE_SIZE-1:0] cur_state = AWAITING_CMD;
-    reg reset = 1'b0;
-    reg enable = 1'b1;
+    wire derived_signal;
+    wire derived_clk;
     reg [7:0] cmd = 8'hfe; // 0xFE is an unused command
     reg bit_cnt_reset = 1'b0;
     wire [5:0] bit_cnt;
@@ -21,8 +20,8 @@ module fake_n64_controller(
 
     n_bit_counter BIT_CNT0(.clk(derived_clk), .reset(bit_cnt_reset), .count(bit_cnt));
 
-    async_to_sync SYNC0(
-        .data(data),
+    async_to_sync ASYNC0(
+        .data(data_rx),
         .sample_clk(sample_clk),
         .derived_signal(derived_signal),
         .derived_clk(derived_clk)
