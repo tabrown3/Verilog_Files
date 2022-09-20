@@ -59,13 +59,15 @@ module fake_n64_controller(
                 end
             end
             RESPONDING_TO_INFO: begin
+                bit_cnt_reset <= 1'b0;
                 if (!derived_clk) begin
-                    bit_cnt_reset <= 1'b0;
+                    
                 end
             end
             RESPONDING_TO_STATUS: begin
+                bit_cnt_reset <= 1'b0;
                 if (!derived_clk) begin
-                    bit_cnt_reset <= 1'b0;
+                    
                 end
             end
             READING_ADDRESS: begin
