@@ -73,4 +73,29 @@ module fake_n64_controller(
             end
         endcase
     end
+
+    localparam BIT_WIDTH = 2;
+    function [7:0] wire_encoding (input [1:0] logic_bit);
+        case (logic_bit)
+            2'b00: begin // logical 0
+                wire_encoding = {{BIT_WIDTH{1'b0}}, {BIT_WIDTH{1'b0}},
+                    {BIT_WIDTH{1'b0}}, {BIT_WIDTH{1'b1}}}; // 0001
+            end
+            2'b01: begin // logical 1
+                wire_encoding = {{BIT_WIDTH{1'b0}}, {BIT_WIDTH{1'b1}},
+                    {BIT_WIDTH{1'b1}}, {BIT_WIDTH{1'b1}}}; // 0111
+            end
+            2'b10: begin // console STOP bit
+                wire_encoding = {{BIT_WIDTH{1'b0}}, {BIT_WIDTH{1'b1}},
+                    {BIT_WIDTH{1'b1}}, {BIT_WIDTH{1'bz}}}; // 011z
+            end
+            2'b11: begin // controller STOP bit
+                wire_encoding = {{BIT_WIDTH{1'b0}}, {BIT_WIDTH{1'b0}},
+                    {BIT_WIDTH{1'b1}}, {BIT_WIDTH{1'bz}}}; // 001z
+            end
+            default: begin
+                wire_encoding = {BIT_WIDTH{1'b1}}; // 1111 - might regret this...
+            end
+        endcase
+    endfunction
 endmodule
