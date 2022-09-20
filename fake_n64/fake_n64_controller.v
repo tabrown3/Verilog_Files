@@ -15,12 +15,11 @@ module fake_n64_controller(
     reg reset = 1'b0;
     reg enable = 1'b1;
     reg [7:0] cmd = 8'hfe; // 0xFE is an unused command
-    reg bit_cnt_clk = 1'b1;
     reg bit_cnt_reset = 1'b0;
-    reg [5:0] bit_cnt = 6'h00;
+    wire [5:0] bit_cnt;
     reg [15:0] address;
 
-    n_bit_counter BIT_CNT0(.clk(bit_cnt_clk), .reset(bit_cnt_reset), .count(bit_cnt));
+    n_bit_counter BIT_CNT0(.clk(derived_clk), .reset(bit_cnt_reset), .count(bit_cnt));
 
     async_to_sync SYNC0(
         .data(data),
