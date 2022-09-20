@@ -7,7 +7,8 @@ module fake_n64_controller(
     localparam STATE_SIZE = 4; // bits
     // STATES
     localparam [STATE_SIZE-1:0] AWAITING_CMD = {STATE_SIZE{1'b0}};
-    localparam [STATE_SIZE-1:0] EXECUTING_CMD = {STATE_SIZE{1'b1}};
+    localparam [STATE_SIZE-1:0] PROCESSING_CMD = {{STATE_SIZE - 1{1'b0}}, 1'b1};
+    localparam [STATE_SIZE-1:0] EXECUTING_CMD = {{STATE_SIZE - 2{1'b0}}, 2'b10};
 
     reg [STATE_SIZE-1:0] cur_state = AWAITING_CMD;
     reg reset = 1'b0;
@@ -34,12 +35,43 @@ module fake_n64_controller(
                 if (!derived_clk) begin
                     cmd[6'h07 - bit_cnt] <= derived_signal;
                     if (bit_cnt == 6'h07) begin
-                        cur_state <= EXECUTING_CMD;
+                        cur_state <= PROCESSING_CMD;
                     end
                 end
             end
+            PROCESSING_CMD: begin
+                case (cmd)
+                    8'h00, 8'hff: begin // INFO, RESET
+                        if (!derived_clk) begin
+                            bit_cnt_reset <= 1'b1;
+                            reset <= 1'b1;
+                        end
+                    end
+                    8'h01: begin // BUTTON STATUS
+                        if (!derived_clk) begin
+                            bit_cnt_reset <= 1'b1;
+                            reset <= 1'b1;
+                        end
+                    end
+                    8'h02: begin // READ
+                    end
+                    8'h03: begin // WRITE
+                    end
+                endcase
+            end
             EXECUTING_CMD: begin
-                // case ()
+                case (cmd)
+                    8'h00: begin // INFO
+                    end
+                    8'h01: begin // BUTTON STATUS
+                    end
+                    8'h02: begin // READ
+                    end
+                    8'h03: begin // WRITE
+                    end
+                    8'hff: begin // RESET and INFO
+                    end
+                endcase
             end
         endcase
     end
