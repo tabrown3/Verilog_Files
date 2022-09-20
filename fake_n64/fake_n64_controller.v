@@ -20,12 +20,15 @@ module fake_n64_controller(
     wire derived_clk;
     reg [7:0] cmd = 8'hfe; // 0xFE is an unused command
     reg bit_cnt_reset = 1'b0;
+    reg level_cnt_reset = 1'b0;
     wire [5:0] bit_cnt;
+    wire [5:0] level_cnt;
     reg [15:0] address;
     reg [31:0] tx_byte_buffer;
     reg [BIT_WIDTH - 1:0] tx_bit_buffer;
 
     n_bit_counter BIT_CNT0(.clk(derived_clk), .reset(bit_cnt_reset), .count(bit_cnt));
+    n_bit_counter LEVEL_CNT0(.clk(sample_clk), .reset(level_cnt_reset), .count(level_cnt));
 
     async_to_sync ASYNC0(
         .data(data_rx),
@@ -65,19 +68,24 @@ module fake_n64_controller(
                 end
             end
             PREP_INFO_RESPONSE: begin
-                bit_cnt_reset <= 1'b0;
                 if (!derived_clk) begin
                     tx_byte_buffer <= 24'h050000; // OEM controller
+                    cur_state <= RESPONDING_TO_INFO;
+                end else begin
+                    bit_cnt_reset <= 1'b0;
+                    level_cnt_reset <= 1'b1;
                 end
             end
             PREP_STATUS_RESPONSE: begin
-                bit_cnt_reset <= 1'b0;
                 if (!derived_clk) begin
                     tx_byte_buffer <= 32'h00000000; // no buttons pressed, analog stick at center
+                    cur_state <= RESPONDING_TO_STATUS;
+                end else begin
+                    bit_cnt_reset <= 1'b0;
+                    level_cnt_reset <= 1'b1;
                 end
             end
             RESPONDING_TO_INFO: begin
-                
             end
             RESPONDING_TO_STATUS: begin
             end
