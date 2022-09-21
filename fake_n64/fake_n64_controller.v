@@ -6,16 +6,18 @@ module fake_n64_controller(
     localparam LEVEL_WIDTH = 4'h2; // in clk cycles
     localparam BIT_WIDTH = 4'h4*LEVEL_WIDTH; // in clk cycles
 
-    localparam STATE_SIZE = 4; // bits
+    localparam READ_STATE_SIZE = 4; // bits
     // STATES
-    localparam [STATE_SIZE-1:0] AWAITING_CMD = {STATE_SIZE{1'b0}};
-    localparam [STATE_SIZE-1:0] RESPONDING_TO_INFO = {{STATE_SIZE - 1{1'b0}}, 1'b1};
-    localparam [STATE_SIZE-1:0] RESPONDING_TO_STATUS = {{STATE_SIZE - 2{1'b0}}, 2'b10};
-    localparam [STATE_SIZE-1:0] READING_ADDRESS = {{STATE_SIZE - 2{1'b0}}, 2'b11};
-    localparam [STATE_SIZE-1:0] PREP_INFO_RESPONSE = {{STATE_SIZE - 3{1'b0}}, 3'b100};
-    localparam [STATE_SIZE-1:0] PREP_STATUS_RESPONSE = {{STATE_SIZE - 3{1'b0}}, 3'b101};
+    localparam [READ_STATE_SIZE-1:0] AWAITING_CMD = {READ_STATE_SIZE{1'b0}};
+    localparam [READ_STATE_SIZE-1:0] RESPONDING_TO_INFO = {{READ_STATE_SIZE - 1{1'b0}}, 1'b1};
+    localparam [READ_STATE_SIZE-1:0] RESPONDING_TO_STATUS = {{READ_STATE_SIZE - 2{1'b0}}, 2'b10};
+    localparam [READ_STATE_SIZE-1:0] READING_ADDRESS = {{READ_STATE_SIZE - 2{1'b0}}, 2'b11};
+    localparam [READ_STATE_SIZE-1:0] PREP_INFO_RESPONSE = {{READ_STATE_SIZE - 3{1'b0}}, 3'b100};
+    localparam [READ_STATE_SIZE-1:0] PREP_STATUS_RESPONSE = {{READ_STATE_SIZE - 3{1'b0}}, 3'b101};
 
-    reg [STATE_SIZE-1:0] cur_state = AWAITING_CMD;
+
+
+    reg [READ_STATE_SIZE-1:0] cur_read_state = AWAITING_CMD;
     wire derived_signal;
     wire derived_clk;
     reg [7:0] cmd = 8'hfe; // 0xFE is an unused command
@@ -38,7 +40,7 @@ module fake_n64_controller(
     );
 
     always @(edge derived_clk) begin
-        case (cur_state)
+        case (cur_read_state)
             AWAITING_CMD: begin
                 if (!derived_clk) begin
                     if (bit_cnt == 6'h08) begin
@@ -46,19 +48,19 @@ module fake_n64_controller(
                             8'h00, 8'hff: begin // INFO, RESET
                                 if (!derived_clk) begin
                                     bit_cnt_reset <= 1'b1;
-                                    cur_state <= PREP_INFO_RESPONSE;
+                                    cur_read_state <= PREP_INFO_RESPONSE;
                                 end
                             end
                             8'h01: begin // BUTTON STATUS
                                 if (!derived_clk) begin
                                     bit_cnt_reset <= 1'b1;
-                                    cur_state <= PREP_STATUS_RESPONSE;
+                                    cur_read_state <= PREP_STATUS_RESPONSE;
                                 end
                             end
                             8'h02, 8'h03: begin // READ, WRITE
                                 if (!derived_clk) begin
                                     address[6'h17 - bit_cnt] <= derived_signal; // 23 - bit cnt
-                                    cur_state <= READING_ADDRESS;
+                                    cur_read_state <= READING_ADDRESS;
                                 end
                             end
                         endcase
@@ -70,7 +72,7 @@ module fake_n64_controller(
             PREP_INFO_RESPONSE: begin
                 if (!derived_clk) begin
                     tx_byte_buffer <= 24'h050000; // OEM controller
-                    cur_state <= RESPONDING_TO_INFO;
+                    cur_read_state <= RESPONDING_TO_INFO;
                 end else begin
                     bit_cnt_reset <= 1'b0;
                     level_cnt_reset <= 1'b1;
@@ -79,7 +81,7 @@ module fake_n64_controller(
             PREP_STATUS_RESPONSE: begin
                 if (!derived_clk) begin
                     tx_byte_buffer <= 32'h00000000; // no buttons pressed, analog stick at center
-                    cur_state <= RESPONDING_TO_STATUS;
+                    cur_read_state <= RESPONDING_TO_STATUS;
                 end else begin
                     bit_cnt_reset <= 1'b0;
                     level_cnt_reset <= 1'b1;
@@ -94,6 +96,8 @@ module fake_n64_controller(
         endcase
     end
 
+    always @(edge sample_clk) begin
+    end
 
     // LEVEL in this context is physical HIGH or LOW. In the Joybus protocol, bits can
     //  be broken into as many as 4 LEVELs. For instance, logical "0" is LOW-LOW-LOW-HIGH.
