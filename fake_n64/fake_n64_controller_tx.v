@@ -1,24 +1,85 @@
 module fake_n64_controller_tx(
+    input sample_clk,
     input cur_operation,
+    input [7:0] cmd,
     output reg rx_handoff,
-    output data_tx
+    output reg data_tx
 );
-    // TODO: pull TX out into its own file
     localparam LEVEL_WIDTH = 4'h2; // in clk cycles
     localparam BIT_WIDTH = 4'h4*LEVEL_WIDTH; // in clk cycles
+    localparam STOP_BIT = {{LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b1}},
+        {LEVEL_WIDTH{1'bz}}}; // L,L,H,Z
 
-    // tx_byte_buffer <= 24'h050000; // INFO - OEM controller
-    // tx_byte_buffer <= 32'h00000000; // STATUS - no buttons
+    localparam STATE_SIZE = 4; // bits
+    // STATES
+    localparam [STATE_SIZE-1:0] PREPPING_RESPONSE = {STATE_SIZE{1'b0}};
+    localparam [STATE_SIZE-1:0] LOADING_LEVELS = {{STATE_SIZE - 1{1'b0}}, 1'b1};
+    localparam [STATE_SIZE-1:0] SENDING_LEVELS = {{STATE_SIZE - 2{1'b0}}, 2'b10};
+    localparam [STATE_SIZE-1:0] LOADING_STOP = {{STATE_SIZE - 2{1'b0}}, 2'b11};
 
+    reg [STATE_SIZE - 1:0] cur_state = PREPPING_RESPONSE;
     reg level_cnt_reset = 1'b0;
+    reg level_cnt_clk = 1'b1;
     wire [5:0] level_cnt;
+    reg bit_cnt_reset = 1'b0;
+    reg bit_cnt_clk = 1'b1;
+    wire [5:0] bit_cnt;
     reg [31:0] tx_byte_buffer;
+    reg [5:0] tx_byte_buffer_length;
     reg [BIT_WIDTH - 1:0] tx_bit_buffer;
 
-    n_bit_counter LEVEL_CNT0(.clk(sample_clk), .reset(level_cnt_reset), .count(level_cnt));
+    n_bit_counter LEVEL_CNT0(.clk(level_cnt_clk), .reset(level_cnt_reset), .count(level_cnt));
+    n_bit_counter BIT_CNT0(.clk(bit_cnt_clk), .reset(bit_cnt_reset), .count(bit_cnt));
 
     always @(edge sample_clk) begin
-        if (cur_operation == 1'b1) begin // Tx
+        if (cur_operation == 1'b1) begin // Tx   
+            if (sample_clk) begin
+                level_cnt_clk <= 1'b1;
+                level_cnt_reset <= 1'b0;
+                bit_cnt_clk <= 1'b1;
+            end
+
+            if (!sample_clk) begin
+                if (cur_state == PREPPING_RESPONSE) begin
+                    case (cmd)
+                        8'h00, 8'hff: begin
+                            tx_byte_buffer <= 24'h050000; // INFO - OEM controller
+                            tx_byte_buffer_length <= 6'd24;
+                            level_cnt_reset <= 1'b0;
+                            bit_cnt_reset <= 1'b0;
+                            cur_state <= LOADING_LEVELS;
+                        end
+                        8'h01: begin
+                            tx_byte_buffer <= 32'h00000000; // STATUS - buttons/analog sticks
+                            tx_byte_buffer_length <= 6'd32;
+                            level_cnt_reset <= 1'b0;
+                            bit_cnt_reset <= 1'b0;
+                            cur_state <= LOADING_LEVELS;
+                        end
+                        8'h02: begin // READ
+                        end
+                        8'h03: begin // WRITE
+                        end
+                    endcase
+                end else if (cur_state == LOADING_LEVELS) begin
+                    if (bit_cnt == tx_byte_buffer_length) begin
+                        cur_state <= LOADING_STOP;
+                    end else begin
+                        tx_bit_buffer <= wire_encoding(
+                            tx_byte_buffer[tx_byte_buffer_length - 1 - bit_cnt]
+                        );
+                        cur_state <= SENDING_LEVELS;
+                    end
+                end else if (cur_state == SENDING_LEVELS) begin
+                    if (level_cnt == BIT_WIDTH) begin
+                        cur_state <= LOADING_LEVELS;
+                        level_cnt_reset <= 1'b0;
+                    end else begin
+                        data_tx <= tx_bit_buffer[BIT_WIDTH - 1 - level_cnt];
+                        level_cnt_clk <= 1'b0;
+                    end
+                end
+            end
         end
     end
 
@@ -28,26 +89,15 @@ module fake_n64_controller_tx(
     //  a logical "0" would take 8 clk cycles to transmit: LOW (2 cycles), LOW (2 cycles),
     //  LOW (2 cycles), HIGH (2 cycles). Therefore the BIT_WIDTH is 8 clk cycles, because
     //  it takes 8 cycles to fully transmit a single bit.
-    function [BIT_WIDTH - 1:0] wire_encoding (input [1:0] logic_bit);
+    function [BIT_WIDTH - 1:0] wire_encoding (input logic_bit);
         case (logic_bit)
-            2'b00: begin // logical 0
+            1'b0: begin // logical 0
                 wire_encoding = {{LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b0}},
                     {LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b1}}}; // L,L,L,H
             end
-            2'b01: begin // logical 1
+            1'b1: begin // logical 1
                 wire_encoding = {{LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b1}},
                     {LEVEL_WIDTH{1'b1}}, {LEVEL_WIDTH{1'b1}}}; // L,H,H,H
-            end
-            2'b10: begin // console STOP bit
-                wire_encoding = {{LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b1}},
-                    {LEVEL_WIDTH{1'b1}}, {LEVEL_WIDTH{1'bz}}}; // L,H,H,Z
-            end
-            2'b11: begin // controller STOP bit
-                wire_encoding = {{LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b0}},
-                    {LEVEL_WIDTH{1'b1}}, {LEVEL_WIDTH{1'bz}}}; // L,L,H,Z
-            end
-            default: begin
-                wire_encoding = {LEVEL_WIDTH{1'b1}}; // H,H,H,H - might regret this...
             end
         endcase
     endfunction

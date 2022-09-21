@@ -4,11 +4,11 @@ module fake_n64_controller_rx
     input data_rx,
     input sample_clk,
     output reg tx_handoff = 1'b0,
+    output reg [7:0] cmd = 8'hfe,
     output reg [15:0] address
 );
     wire derived_signal;
     wire derived_clk;
-    reg [7:0] cmd = 8'hfe; // 0xFE is an unused command
     reg bit_cnt_reset = 1'b0;
     wire [5:0] bit_cnt;
 
@@ -30,13 +30,7 @@ module fake_n64_controller_rx
         if (!derived_clk) begin
             if (bit_cnt == 6'h08) begin
                 case (cmd)
-                    8'h00, 8'hff: begin // INFO, RESET
-                        if (!derived_clk) begin
-                            bit_cnt_reset <= 1'b1;
-                            tx_handoff <= 1'b1;
-                        end
-                    end
-                    8'h01: begin // BUTTON STATUS
+                    8'h00, 8'h01, 8'hff: begin // INFO, BUTTON STATUS, RESET
                         if (!derived_clk) begin
                             bit_cnt_reset <= 1'b1;
                             tx_handoff <= 1'b1;
