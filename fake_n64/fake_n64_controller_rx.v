@@ -1,7 +1,9 @@
 module fake_n64_controller_rx
 (
+    input cur_operation,
     input data_rx,
     input sample_clk,
+    output reg tx_handoff = 1'b0,
     output reg [15:0] address
 );
     wire derived_signal;
@@ -13,6 +15,7 @@ module fake_n64_controller_rx
     n_bit_counter BIT_CNT0(.clk(derived_clk), .reset(bit_cnt_reset), .count(bit_cnt));
 
     async_to_sync ASYNC0(
+        .cur_operation(cur_operation),
         .data(data_rx),
         .sample_clk(sample_clk),
         .derived_signal(derived_signal),
@@ -30,11 +33,13 @@ module fake_n64_controller_rx
                     8'h00, 8'hff: begin // INFO, RESET
                         if (!derived_clk) begin
                             bit_cnt_reset <= 1'b1;
+                            tx_handoff <= 1'b1;
                         end
                     end
                     8'h01: begin // BUTTON STATUS
                         if (!derived_clk) begin
                             bit_cnt_reset <= 1'b1;
+                            tx_handoff <= 1'b1;
                         end
                     end
                     8'h02, 8'h03: begin // READ, WRITE

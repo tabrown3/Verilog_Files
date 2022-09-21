@@ -1,5 +1,6 @@
 `include "../common/n_bit_counter.v"
 module async_to_sync(
+    input cur_operation,
     input data,
     input sample_clk,
     output reg derived_signal = 1'b1,
@@ -26,62 +27,64 @@ module async_to_sync(
     n_bit_counter HIGH_CNT0(.clk(high_cnt_clk), .reset(reset_high_cnt), .count(high_cnt));
 
     always @(edge sample_clk) begin
-        case (cur_state)
-            AWAITING_FIRST_BIT: begin
-                if (sample_clk && !derived_clk) begin
-                    derived_clk <= 1;
-                end
+        if (cur_operation == 1'b0) begin // Rx
+            case (cur_state)
+                AWAITING_FIRST_BIT: begin
+                    if (sample_clk && !derived_clk) begin
+                        derived_clk <= 1;
+                    end
 
-                if (!sample_clk && !data) begin
-                    cur_state <= READING_BIT_LOW;
-                    low_cnt_clk <= sample_clk;
-                    reset_low_cnt <= 1'b0;
-                    reset_high_cnt <= 1'b0;
-                end
-            end
-            READING_BIT_LOW: begin
-                if (!sample_clk && data) begin
-                    reset_high_cnt <= 1'b0;
-                    high_cnt_clk <= sample_clk;
-                    cur_state <= READING_BIT_HIGH;
-
-                    low_cnt_latch <= low_cnt;
-                    reset_low_cnt <= 1'b1;
-                end else begin
-                    low_cnt_clk <= sample_clk;
-                    if (!derived_clk) begin
-                        derived_clk <= 1'b1;
+                    if (!sample_clk && !data) begin
+                        cur_state <= READING_BIT_LOW;
+                        low_cnt_clk <= sample_clk;
+                        reset_low_cnt <= 1'b0;
+                        reset_high_cnt <= 1'b0;
                     end
                 end
-            end
-            READING_BIT_HIGH: begin
-                if (!sample_clk && !data) begin
-                    reset_low_cnt <= 1'b0;
-                    low_cnt_clk <= sample_clk;
-                    cur_state <= READING_BIT_LOW;
+                READING_BIT_LOW: begin
+                    if (!sample_clk && data) begin
+                        reset_high_cnt <= 1'b0;
+                        high_cnt_clk <= sample_clk;
+                        cur_state <= READING_BIT_HIGH;
 
-                    derived_clk <= 1'b0;
-                    reset_high_cnt <= 1'b1;
-                    if (low_cnt_latch > high_cnt) begin
-                        derived_signal <= 1'b0;
+                        low_cnt_latch <= low_cnt;
+                        reset_low_cnt <= 1'b1;
                     end else begin
-                        derived_signal <= 1'b1;
+                        low_cnt_clk <= sample_clk;
+                        if (!derived_clk) begin
+                            derived_clk <= 1'b1;
+                        end
                     end
-                end else if (!sample_clk && high_cnt > 4'd8) begin
-                    low_cnt_clk <= 1'b1;
-                    high_cnt_clk <= 1'b1;
-                    reset_low_cnt <= 1'b1;
-                    reset_high_cnt <= 1'b1;
-                    low_cnt_latch <= 6'h00;
-
-                    derived_signal <= 1'b1;
-                    derived_clk <= 1'b0;
-
-                    cur_state <= AWAITING_FIRST_BIT;
-                end else begin
-                    high_cnt_clk <= sample_clk;
                 end
-            end
-        endcase
+                READING_BIT_HIGH: begin
+                    if (!sample_clk && !data) begin
+                        reset_low_cnt <= 1'b0;
+                        low_cnt_clk <= sample_clk;
+                        cur_state <= READING_BIT_LOW;
+
+                        derived_clk <= 1'b0;
+                        reset_high_cnt <= 1'b1;
+                        if (low_cnt_latch > high_cnt) begin
+                            derived_signal <= 1'b0;
+                        end else begin
+                            derived_signal <= 1'b1;
+                        end
+                    end else if (!sample_clk && high_cnt > 4'd8) begin
+                        low_cnt_clk <= 1'b1;
+                        high_cnt_clk <= 1'b1;
+                        reset_low_cnt <= 1'b1;
+                        reset_high_cnt <= 1'b1;
+                        low_cnt_latch <= 6'h00;
+
+                        derived_signal <= 1'b1;
+                        derived_clk <= 1'b0;
+
+                        cur_state <= AWAITING_FIRST_BIT;
+                    end else begin
+                        high_cnt_clk <= sample_clk;
+                    end
+                end
+            endcase
+        end
     end
 endmodule

@@ -1,4 +1,6 @@
 module fake_n64_controller_tx(
+    input cur_operation,
+    output reg rx_handoff,
     output data_tx
 );
     // TODO: pull TX out into its own file
@@ -16,6 +18,8 @@ module fake_n64_controller_tx(
     n_bit_counter LEVEL_CNT0(.clk(sample_clk), .reset(level_cnt_reset), .count(level_cnt));
 
     always @(edge sample_clk) begin
+        if (cur_operation == 1'b1) begin // Tx
+        end
     end
 
     // LEVEL in this context is physical HIGH or LOW. In the Joybus protocol, bits can
