@@ -13,9 +13,8 @@ module fake_n64_controller_tx(
     localparam STATE_SIZE = 4; // bits
     // STATES
     localparam [STATE_SIZE-1:0] PREPPING_RESPONSE = {STATE_SIZE{1'b0}};
-    localparam [STATE_SIZE-1:0] LOADING_LEVELS = {{STATE_SIZE - 1{1'b0}}, 1'b1};
-    localparam [STATE_SIZE-1:0] SENDING_LEVELS = {{STATE_SIZE - 2{1'b0}}, 2'b10};
-    localparam [STATE_SIZE-1:0] LOADING_STOP = {{STATE_SIZE - 2{1'b0}}, 2'b11};
+    localparam [STATE_SIZE-1:0] SENDING_LEVELS = {{STATE_SIZE - 1{1'b0}}, 1'b1};
+    localparam [STATE_SIZE-1:0] SENDING_STOP = {{STATE_SIZE - 2{1'b0}}, 2'b10};
 
     reg [STATE_SIZE - 1:0] cur_state = PREPPING_RESPONSE;
     reg level_cnt_reset = 1'b0;
@@ -45,39 +44,44 @@ module fake_n64_controller_tx(
                         8'h00, 8'hff: begin
                             tx_byte_buffer <= 24'h050000; // INFO - OEM controller
                             tx_byte_buffer_length <= 6'd24;
-                            level_cnt_reset <= 1'b0;
-                            bit_cnt_reset <= 1'b0;
-                            cur_state <= LOADING_LEVELS;
+                            cur_state <= SENDING_LEVELS;
+
+                            tx_bit_buffer <= wire_encoding(
+                                tx_byte_buffer[6'd23]
+                            );
+                            bit_cnt_clk <= 1'b0;
                         end
                         8'h01: begin
                             tx_byte_buffer <= 32'h00000000; // STATUS - buttons/analog sticks
                             tx_byte_buffer_length <= 6'd32;
-                            level_cnt_reset <= 1'b0;
-                            bit_cnt_reset <= 1'b0;
-                            cur_state <= LOADING_LEVELS;
+                            cur_state <= SENDING_LEVELS;
+
+                            tx_bit_buffer <= wire_encoding(
+                                tx_byte_buffer[6'd31]
+                            );
+                            bit_cnt_clk <= 1'b0;
                         end
                         8'h02: begin // READ
                         end
                         8'h03: begin // WRITE
                         end
                     endcase
-                end else if (cur_state == LOADING_LEVELS) begin
-                    if (bit_cnt == tx_byte_buffer_length) begin
-                        cur_state <= LOADING_STOP;
-                    end else begin
-                        tx_bit_buffer <= wire_encoding(
-                            tx_byte_buffer[tx_byte_buffer_length - 1 - bit_cnt]
-                        );
-                        cur_state <= SENDING_LEVELS;
-                    end
                 end else if (cur_state == SENDING_LEVELS) begin
-                    if (level_cnt == BIT_WIDTH) begin
-                        cur_state <= LOADING_LEVELS;
-                        level_cnt_reset <= 1'b1;
-                        bit_cnt_clk <= 1'b0;
-                    end else begin
+                    if (level_cnt == BIT_WIDTH) begin // if reached the end of a bit
+                        level_cnt_reset <= 1'b1; // reset level count
+                        bit_cnt_clk <= 1'b0; // increment bit count
+
+                        // if all data bits have been transmitted
+                        if (bit_cnt == tx_byte_buffer_length) begin
+                            cur_state <= SENDING_STOP; // go transmit the stop bit
+                        end else begin // otherwise load the next data bit
+                            tx_bit_buffer <= wire_encoding(
+                                tx_byte_buffer[tx_byte_buffer_length - 1 - bit_cnt]
+                            );
+                        end
+                    end else begin // otherwise transmit the next level in the bit
                         data_tx <= tx_bit_buffer[BIT_WIDTH - 1 - level_cnt];
-                        level_cnt_clk <= 1'b0;
+                        level_cnt_clk <= 1'b0; // and increment level count
                     end
                 end
             end
