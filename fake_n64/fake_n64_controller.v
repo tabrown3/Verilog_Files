@@ -3,22 +3,13 @@ module fake_n64_controller(
     input sample_clk,
     output data_tx
 );
-    localparam READ_STATE_SIZE = 4;
-    localparam WRITE_STATE_SIZE = 4;
-
-    wire [READ_STATE_SIZE-1:0] cur_read_state;
-    wire [WRITE_STATE_SIZE-1:0] cur_write_state;
-
-    fake_n64_controller_rx
-    #(
-        .READ_STATE_SIZE(READ_STATE_SIZE)
-    ) RX0 (
+    fake_n64_controller_rx RX0 (
         .data_rx(data_rx),
         .sample_clk(sample_clk),
-        .cur_write_state(cur_write_state),
-        .cur_read_state(cur_read_state)
+        .address(address)
     );
 
+    // TODO: pull TX out into its own file
     localparam LEVEL_WIDTH = 4'h2; // in clk cycles
     localparam BIT_WIDTH = 4'h4*LEVEL_WIDTH; // in clk cycles
 
