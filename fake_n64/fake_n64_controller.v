@@ -3,98 +3,34 @@ module fake_n64_controller(
     input sample_clk,
     output data_tx
 );
+    localparam READ_STATE_SIZE = 4;
+    localparam WRITE_STATE_SIZE = 4;
+
+    wire [READ_STATE_SIZE-1:0] cur_read_state;
+    wire [WRITE_STATE_SIZE-1:0] cur_write_state;
+
+    fake_n64_controller_rx
+    #(
+        .READ_STATE_SIZE(READ_STATE_SIZE)
+    ) RX0 (
+        .data_rx(data_rx),
+        .sample_clk(sample_clk),
+        .cur_write_state(cur_write_state),
+        .cur_read_state(cur_read_state)
+    );
+
     localparam LEVEL_WIDTH = 4'h2; // in clk cycles
     localparam BIT_WIDTH = 4'h4*LEVEL_WIDTH; // in clk cycles
 
-    localparam READ_STATE_SIZE = 4; // bits
-    // STATES
-    localparam [READ_STATE_SIZE-1:0] AWAITING_CMD = {READ_STATE_SIZE{1'b0}};
-    localparam [READ_STATE_SIZE-1:0] RESPONDING_TO_INFO = {{READ_STATE_SIZE - 1{1'b0}}, 1'b1};
-    localparam [READ_STATE_SIZE-1:0] RESPONDING_TO_STATUS = {{READ_STATE_SIZE - 2{1'b0}}, 2'b10};
-    localparam [READ_STATE_SIZE-1:0] READING_ADDRESS = {{READ_STATE_SIZE - 2{1'b0}}, 2'b11};
-    localparam [READ_STATE_SIZE-1:0] PREP_INFO_RESPONSE = {{READ_STATE_SIZE - 3{1'b0}}, 3'b100};
-    localparam [READ_STATE_SIZE-1:0] PREP_STATUS_RESPONSE = {{READ_STATE_SIZE - 3{1'b0}}, 3'b101};
+    // tx_byte_buffer <= 24'h050000; // INFO - OEM controller
+    // tx_byte_buffer <= 32'h00000000; // STATUS - no buttons
 
-
-
-    reg [READ_STATE_SIZE-1:0] cur_read_state = AWAITING_CMD;
-    wire derived_signal;
-    wire derived_clk;
-    reg [7:0] cmd = 8'hfe; // 0xFE is an unused command
-    reg bit_cnt_reset = 1'b0;
     reg level_cnt_reset = 1'b0;
-    wire [5:0] bit_cnt;
     wire [5:0] level_cnt;
-    reg [15:0] address;
     reg [31:0] tx_byte_buffer;
     reg [BIT_WIDTH - 1:0] tx_bit_buffer;
 
-    n_bit_counter BIT_CNT0(.clk(derived_clk), .reset(bit_cnt_reset), .count(bit_cnt));
     n_bit_counter LEVEL_CNT0(.clk(sample_clk), .reset(level_cnt_reset), .count(level_cnt));
-
-    async_to_sync ASYNC0(
-        .data(data_rx),
-        .sample_clk(sample_clk),
-        .derived_signal(derived_signal),
-        .derived_clk(derived_clk)
-    );
-
-    always @(edge derived_clk) begin
-        case (cur_read_state)
-            AWAITING_CMD: begin
-                if (!derived_clk) begin
-                    if (bit_cnt == 6'h08) begin
-                        case (cmd)
-                            8'h00, 8'hff: begin // INFO, RESET
-                                if (!derived_clk) begin
-                                    bit_cnt_reset <= 1'b1;
-                                    cur_read_state <= PREP_INFO_RESPONSE;
-                                end
-                            end
-                            8'h01: begin // BUTTON STATUS
-                                if (!derived_clk) begin
-                                    bit_cnt_reset <= 1'b1;
-                                    cur_read_state <= PREP_STATUS_RESPONSE;
-                                end
-                            end
-                            8'h02, 8'h03: begin // READ, WRITE
-                                if (!derived_clk) begin
-                                    address[6'h17 - bit_cnt] <= derived_signal; // 23 - bit cnt
-                                    cur_read_state <= READING_ADDRESS;
-                                end
-                            end
-                        endcase
-                    end else begin
-                        cmd[6'h07 - bit_cnt] <= derived_signal;
-                    end
-                end
-            end
-            PREP_INFO_RESPONSE: begin
-                if (!derived_clk) begin
-                    tx_byte_buffer <= 24'h050000; // OEM controller
-                    cur_read_state <= RESPONDING_TO_INFO;
-                end else begin
-                    bit_cnt_reset <= 1'b0;
-                    level_cnt_reset <= 1'b1;
-                end
-            end
-            PREP_STATUS_RESPONSE: begin
-                if (!derived_clk) begin
-                    tx_byte_buffer <= 32'h00000000; // no buttons pressed, analog stick at center
-                    cur_read_state <= RESPONDING_TO_STATUS;
-                end else begin
-                    bit_cnt_reset <= 1'b0;
-                    level_cnt_reset <= 1'b1;
-                end
-            end
-            RESPONDING_TO_INFO: begin
-            end
-            RESPONDING_TO_STATUS: begin
-            end
-            READING_ADDRESS: begin
-            end
-        endcase
-    end
 
     always @(edge sample_clk) begin
     end
