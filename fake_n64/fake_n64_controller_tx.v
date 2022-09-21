@@ -73,7 +73,8 @@ module fake_n64_controller_tx(
                 end else if (cur_state == SENDING_LEVELS) begin
                     if (level_cnt == BIT_WIDTH) begin
                         cur_state <= LOADING_LEVELS;
-                        level_cnt_reset <= 1'b0;
+                        level_cnt_reset <= 1'b1;
+                        bit_cnt_clk <= 1'b0;
                     end else begin
                         data_tx <= tx_bit_buffer[BIT_WIDTH - 1 - level_cnt];
                         level_cnt_clk <= 1'b0;
