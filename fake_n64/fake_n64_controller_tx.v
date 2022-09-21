@@ -19,7 +19,7 @@ module fake_n64_controller_tx(
     reg [STATE_SIZE - 1:0] cur_state = PREPPING_RESPONSE;
     reg level_cnt_reset = 1'b0;
     reg level_cnt_clk = 1'b1;
-    wire [5:0] level_cnt;
+    wire [2:0] level_cnt;
     reg bit_cnt_reset = 1'b0;
     reg bit_cnt_clk = 1'b1;
     wire [5:0] bit_cnt;
@@ -27,7 +27,11 @@ module fake_n64_controller_tx(
     reg [5:0] tx_byte_buffer_length;
     reg [BIT_WIDTH - 1:0] tx_bit_buffer;
 
-    n_bit_counter LEVEL_CNT0(.clk(level_cnt_clk), .reset(level_cnt_reset), .count(level_cnt));
+    n_bit_counter #(.BIT_COUNT(3)) LEVEL_CNT0(
+        .clk(level_cnt_clk),
+        .reset(1'b0),
+        .count(level_cnt)
+    );
     n_bit_counter BIT_CNT0(.clk(bit_cnt_clk), .reset(bit_cnt_reset), .count(bit_cnt));
 
     always @(edge sample_clk) begin
@@ -66,8 +70,7 @@ module fake_n64_controller_tx(
                         end
                     endcase
                 end else if (cur_state == SENDING_LEVELS) begin
-                    if (level_cnt == BIT_WIDTH) begin // if reached the end of a bit
-                        level_cnt_reset <= 1'b1; // reset level count
+                    if (level_cnt == BIT_WIDTH - 1) begin // if reached the end of a bit
                         bit_cnt_clk <= 1'b0; // increment bit count
 
                         // if all data bits have been transmitted
