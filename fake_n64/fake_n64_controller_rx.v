@@ -20,6 +20,10 @@ module fake_n64_controller_rx
     );
 
     always @(edge derived_clk) begin
+        if (derived_clk && bit_cnt_reset) begin
+            bit_cnt_reset <= 1'b0;
+        end
+
         if (!derived_clk) begin
             if (bit_cnt == 6'h08) begin
                 case (cmd)
