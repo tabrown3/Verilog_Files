@@ -47,20 +47,18 @@ module fake_n64_controller_tx(
                             tx_byte_buffer_length <= 6'd24;
                             cur_state <= SENDING_LEVELS;
 
-                            tx_bit_buffer <= wire_encoding(1'b0);
-                            bit_cnt_clk <= 1'b0;
-                            data_tx <= 1'b0;
-                            level_cnt_clk <= 1'b0;
+                            tx_bit_buffer <= wire_encoding(1'b0); // set levels for first bit
+                            data_tx <= 1'b0; // transmit first level
+                            level_cnt_clk <= 1'b0; // increment level cnt
                         end
                         8'h01: begin
                             tx_byte_buffer <= 32'h00000000; // STATUS - buttons/analog sticks
                             tx_byte_buffer_length <= 6'd32;
                             cur_state <= SENDING_LEVELS;
 
-                            tx_bit_buffer <= wire_encoding(1'b0);
-                            bit_cnt_clk <= 1'b0;
-                            data_tx <= 1'b0;
-                            level_cnt_clk <= 1'b0;
+                            tx_bit_buffer <= wire_encoding(1'b0); // set levels for first bit
+                            data_tx <= 1'b0; // transmit first level
+                            level_cnt_clk <= 1'b0; // increment level cnt
                         end
                         8'h02: begin // READ
                         end
@@ -79,6 +77,7 @@ module fake_n64_controller_tx(
                             tx_bit_buffer <= wire_encoding(
                                 tx_byte_buffer[tx_byte_buffer_length - 1 - bit_cnt]
                             );
+                            // TODO: clean up these literals
                             data_tx <= tx_byte_buffer[tx_byte_buffer_length - 1 - bit_cnt] ? 8'h03 : 8'h3f;
                             level_cnt_clk <= 1'b0;
                         end
