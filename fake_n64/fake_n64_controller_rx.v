@@ -67,7 +67,7 @@ module fake_n64_controller_rx
                             end else if (bit_cnt == 9'd280) begin
                                 bit_cnt_reset <= 1'b1;
                                 crc_reset <= 1'b1;
-                                tx_handoff <= ~tx_handoff;
+                                // tx_handoff <= ~tx_handoff;
                             end
                         end
                     end
