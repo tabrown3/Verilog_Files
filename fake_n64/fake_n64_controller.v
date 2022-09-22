@@ -6,10 +6,12 @@ module fake_n64_controller(
     localparam RX = 1'b0;
     localparam TX = 1'b1;
 
-    reg cur_operation = RX;
+    wire cur_operation;
     wire [7:0] cmd;
     wire tx_handoff;
     wire rx_handoff;
+
+    assign cur_operation = tx_handoff == rx_handoff ? RX : TX;
 
     fake_n64_controller_rx RX0 (
         .cur_operation(cur_operation),
@@ -27,12 +29,4 @@ module fake_n64_controller(
         .rx_handoff(rx_handoff),
         .data_tx(data_tx)
     );
-
-    always @(posedge tx_handoff or posedge rx_handoff) begin
-        if (tx_handoff) begin
-            cur_operation <= TX;
-        end else begin
-            cur_operation <= RX;
-        end
-    end
 endmodule

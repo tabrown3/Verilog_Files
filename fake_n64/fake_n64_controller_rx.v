@@ -33,7 +33,7 @@ module fake_n64_controller_rx
                     8'h00, 8'h01, 8'hff: begin // INFO, BUTTON STATUS, RESET
                         if (!derived_clk) begin
                             bit_cnt_reset <= 1'b1;
-                            tx_handoff <= 1'b1;
+                            tx_handoff <= ~tx_handoff;
                         end
                     end
                     8'h02, 8'h03: begin // READ, WRITE

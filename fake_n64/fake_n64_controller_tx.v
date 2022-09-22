@@ -2,7 +2,7 @@ module fake_n64_controller_tx(
     input sample_clk,
     input cur_operation,
     input [7:0] cmd,
-    output reg rx_handoff,
+    output reg rx_handoff = 1'b0,
     output reg data_tx
 );
     localparam LEVEL_WIDTH = 4'h2; // in clk cycles
@@ -69,14 +69,17 @@ module fake_n64_controller_tx(
                     if (level_cnt == BIT_WIDTH - 1) begin // if reached the end of a bit
                         bit_cnt_clk <= 1'b0; // increment bit count
 
-                        // if all data bits have been transmitted
-                        if (bit_cnt == tx_byte_buffer_length) begin
-                            cur_state <= SENDING_STOP; // go transmit the stop bit
+                        if (bit_cnt == tx_byte_buffer_length + 1) begin
+                            rx_handoff <= ~rx_handoff;
+                        end // if all data bits have been transmitted
+                        else if (bit_cnt == tx_byte_buffer_length) begin
+                            tx_bit_buffer <= STOP_BIT;
+                            data_tx <= 1'b0;
+                            level_cnt_clk <= 1'b0;
                         end else begin // otherwise load the next data bit
                             tx_bit_buffer <= wire_encoding(
                                 tx_byte_buffer[tx_byte_buffer_length - 2 - bit_cnt]
                             );
-                            // TODO: clean up these literals
                             data_tx <= tx_byte_buffer[tx_byte_buffer_length - 2 - bit_cnt] ? 8'h03 : 8'h3f;
                             level_cnt_clk <= 1'b0;
                         end
