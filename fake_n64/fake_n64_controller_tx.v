@@ -74,12 +74,12 @@ module fake_n64_controller_tx(
                         end // if all data bits have been transmitted
                         else if (bit_cnt == tx_byte_buffer_length) begin
                             tx_bit_buffer <= STOP_BIT;
-                            data_tx <= 1'b0;
                             level_cnt_clk <= 1'b0;
                         end else begin // otherwise load the next data bit
                             tx_bit_buffer <= wire_encoding(
                                 tx_byte_buffer[tx_byte_buffer_length - 2 - bit_cnt]
                             );
+                            // TODO: what even is this line doing? It's assigning a bits to a 1 bit reg
                             data_tx <= tx_byte_buffer[tx_byte_buffer_length - 2 - bit_cnt] ? 8'h03 : 8'h3f;
                             level_cnt_clk <= 1'b0;
                         end
