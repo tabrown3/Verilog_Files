@@ -7,7 +7,7 @@ module tb_generate_crc ();
     reg data = 1'b0;
     wire [7:0] crc;
 
-    reg [7:0] test_data [8:0];
+    reg [7:0] test_data [9:0];
     integer i;
     integer j;
 
@@ -29,8 +29,10 @@ module tb_generate_crc ();
         test_data[6] = 8'h37;
         test_data[7] = 8'h38;
         test_data[8] = 8'h39;
+        test_data[9] = 8'h00; // data must be followed up with 8 zeroes
+        #1;
 
-        for (i = 0; i < 9; i = i + 1) begin
+        for (i = 0; i < 10; i = i + 1) begin
             for (j = 7; j >= 0; j = j - 1) begin
                 data = test_data[i][j];
                 clk = 1'b0;
