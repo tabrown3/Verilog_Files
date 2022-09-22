@@ -50,15 +50,11 @@ module fake_n64_controller_tx(
                             tx_byte_buffer <= 24'h050000; // INFO - OEM controller
                             tx_byte_buffer_length <= 6'd24;
                             cur_state <= SENDING_LEVELS;
-
-                            tx_bit_buffer <= wire_encoding(1'b0); // set levels for first bit
                         end
                         8'h01: begin
                             tx_byte_buffer <= 32'h00000000; // STATUS - buttons/analog sticks
                             tx_byte_buffer_length <= 6'd32;
                             cur_state <= SENDING_LEVELS;
-
-                            tx_bit_buffer <= wire_encoding(1'b0); // set levels for first bit
                         end
                         8'h02: begin // READ
                         end
@@ -66,27 +62,33 @@ module fake_n64_controller_tx(
                         end
                     endcase
                 end else if (cur_state == SENDING_LEVELS) begin
-                    if (level_cnt == BIT_WIDTH - 1) begin // if reached the end of a bit
-                        bit_cnt_clk <= 1'b0; // increment bit count
-
+                    if (level_cnt == 1'b0) begin
                         if (bit_cnt == tx_byte_buffer_length + 1) begin
                             rx_handoff <= ~rx_handoff;
+                            cur_state <= PREPPING_RESPONSE;
+                            bit_cnt_reset <= 1'b1;
                         end // if all data bits have been transmitted
                         else if (bit_cnt == tx_byte_buffer_length) begin
                             tx_bit_buffer <= STOP_BIT;
+                            data_tx <= 1'b0;
                             level_cnt_clk <= 1'b0;
                         end else begin // otherwise load the next data bit
                             tx_bit_buffer <= wire_encoding(
-                                tx_byte_buffer[tx_byte_buffer_length - 2 - bit_cnt]
+                                tx_byte_buffer[tx_byte_buffer_length - 1 - bit_cnt]
                             );
-                            // TODO: what even is this line doing? It's assigning a bits to a 1 bit reg
-                            data_tx <= tx_byte_buffer[tx_byte_buffer_length - 2 - bit_cnt] ? 8'h03 : 8'h3f;
+
+                            data_tx <= 1'b0;
                             level_cnt_clk <= 1'b0;
                         end
                     end else begin // otherwise transmit the next level in the bit
                         data_tx <= tx_bit_buffer[BIT_WIDTH - 1 - level_cnt];
                         level_cnt_clk <= 1'b0; // and increment level count
                     end
+                    
+                    if (level_cnt == BIT_WIDTH - 1'b1) begin
+                        bit_cnt_clk <= 1'b0; // increment bit count
+                        level_cnt_reset <= 1'b1;
+                    end 
                 end
             end
         end
