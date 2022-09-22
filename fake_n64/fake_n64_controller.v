@@ -8,6 +8,8 @@ module fake_n64_controller(
 
     wire cur_operation;
     wire [7:0] cmd;
+    wire [15:0] address;
+    wire [7:0] crc;
     wire tx_handoff;
     wire rx_handoff;
 
@@ -19,7 +21,8 @@ module fake_n64_controller(
         .sample_clk(sample_clk),
         .tx_handoff(tx_handoff),
         .cmd(cmd),
-        .address(address)
+        .address(address),
+        .crc(crc)
     );
 
     fake_n64_controller_tx TX0 (
