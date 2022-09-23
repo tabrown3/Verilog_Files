@@ -6,7 +6,7 @@ module fake_n64_controller_rx
     output reg tx_handoff = 1'b0,
     output reg [7:0] cmd = 8'hfe,
     output reg [15:0] address = 16'h0000,
-    output wire [7:0] crc
+    output reg [7:0] crc
 );
     localparam BIT_CNT_SIZE = 9;
 
@@ -16,6 +16,7 @@ module fake_n64_controller_rx
     wire [BIT_CNT_SIZE-1:0] bit_cnt;
     reg crc_reset = 1'b0;
     reg crc_enable = 1'b0;
+    wire [7:0] rem;
 
     n_bit_counter #(.BIT_COUNT(BIT_CNT_SIZE)) BIT_CNT0(
         .clk(derived_clk),
@@ -36,12 +37,13 @@ module fake_n64_controller_rx
         .enable(crc_enable),
         .clk(derived_clk),
         .data(derived_signal),
-        .rem(crc)
+        .rem(rem)
     );
 
     always @(edge derived_clk) begin
         if (derived_clk) begin
             bit_cnt_reset <= 1'b0;
+            crc_reset <= 1'b0;
         end
 
         if (!derived_clk) begin
@@ -73,6 +75,8 @@ module fake_n64_controller_rx
                                 crc_enable <= 1'b0;
                             end else if (bit_cnt == 9'd280) begin
                                 bit_cnt_reset <= 1'b1;
+                                crc <= rem;
+                                crc_reset <= 1'b1;
                                 tx_handoff <= ~tx_handoff;
                             end
                         end
