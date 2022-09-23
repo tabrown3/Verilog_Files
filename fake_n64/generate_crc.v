@@ -14,7 +14,7 @@ module generate_crc
 
     assign rem = window;
 
-    always @(edge clk or posedge reset) begin
+    always @(negedge clk, posedge reset) begin
         if (reset) begin
             if (reset_to) begin
                 window <= reset_to;
@@ -22,18 +22,16 @@ module generate_crc
                 window <= 8'h00;
             end
         end else if (enable) begin
-            if (!clk) begin
-                window <= {
-                    window[6]^window[7],
-                    window[5],
-                    window[4],
-                    window[3],
-                    window[2],
-                    window[1]^window[7],
-                    window[0],
-                    data^window[7]
-                };
-            end
+            window <= {
+                window[6]^window[7],
+                window[5],
+                window[4],
+                window[3],
+                window[2],
+                window[1]^window[7],
+                window[0],
+                data^window[7]
+            };
         end
     end
 endmodule
