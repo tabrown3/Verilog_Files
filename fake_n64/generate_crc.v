@@ -4,6 +4,7 @@ module generate_crc
 )
 (
     input reset,
+    input [7:0] reset_to,
     input enable,
     input clk,
     input data,
@@ -13,9 +14,13 @@ module generate_crc
 
     assign rem = window;
 
-    always @(edge clk) begin
+    always @(edge clk or posedge reset) begin
         if (reset) begin
-            window <= 8'h00;
+            if (reset_to) begin
+                window <= reset_to;
+            end else begin
+                window <= 8'h00;
+            end
         end else if (enable) begin
             if (!clk) begin
                 window <= {

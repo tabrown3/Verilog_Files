@@ -29,6 +29,7 @@ module fake_n64_controller(
         .sample_clk(sample_clk),
         .cur_operation(cur_operation),
         .cmd(cmd),
+        .crc(crc),
         .rx_handoff(rx_handoff),
         .data_tx(data_tx)
     );

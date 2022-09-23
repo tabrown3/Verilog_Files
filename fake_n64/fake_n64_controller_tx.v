@@ -2,6 +2,7 @@ module fake_n64_controller_tx(
     input sample_clk,
     input cur_operation,
     input [7:0] cmd,
+    input [7:0] crc,
     output reg rx_handoff = 1'b0,
     output reg data_tx
 );
@@ -15,6 +16,7 @@ module fake_n64_controller_tx(
     localparam [STATE_SIZE-1:0] PREPPING_RESPONSE = {STATE_SIZE{1'b0}};
     localparam [STATE_SIZE-1:0] SENDING_LEVELS = {{STATE_SIZE - 1{1'b0}}, 1'b1};
     localparam [STATE_SIZE-1:0] SENDING_STOP = {{STATE_SIZE - 2{1'b0}}, 2'b10};
+    localparam [STATE_SIZE-1:0] FLUSH_CRC = {{STATE_SIZE - 2{1'b0}}, 2'b11};
 
     reg [STATE_SIZE - 1:0] cur_state = PREPPING_RESPONSE;
     reg level_cnt_reset = 1'b0;
@@ -27,12 +29,33 @@ module fake_n64_controller_tx(
     reg [5:0] tx_byte_buffer_length;
     reg [BIT_WIDTH - 1:0] tx_bit_buffer;
 
+    reg crc_reset = 1'b0;
+    reg crc_enable = 1'b1;
+    reg crc_clk = 1'b1;
+    wire [7:0] complete_crc;
+    reg crc_cnt_clk = 1'b1;
+    wire [3:0] crc_cnt;
+
     n_bit_counter #(.BIT_COUNT(3)) LEVEL_CNT0(
         .clk(level_cnt_clk),
         .reset(1'b0),
         .count(level_cnt)
     );
     n_bit_counter BIT_CNT0(.clk(bit_cnt_clk), .reset(bit_cnt_reset), .count(bit_cnt));
+    n_bit_counter #(.BIT_COUNT(4)) CRC_CNT0(
+        .clk(crc_cnt_clk),
+        .reset(1'b0),
+        .count(crc_cnt)
+    );
+
+    generate_crc CRC0(
+        .reset(crc_reset),
+        .reset_to(crc),
+        .enable(crc_enable),
+        .clk(crc_clk),
+        .data(1'b0),
+        .rem(complete_crc)
+    );
 
     always @(edge sample_clk) begin
         if (cur_operation == 1'b1) begin // Tx   
@@ -41,6 +64,8 @@ module fake_n64_controller_tx(
                 level_cnt_reset <= 1'b0;
                 bit_cnt_clk <= 1'b1;
                 bit_cnt_reset <= 1'b0;
+                crc_clk <= 1'b1;
+                crc_cnt_clk <= 1'b1;
             end
 
             if (!sample_clk) begin
@@ -59,6 +84,9 @@ module fake_n64_controller_tx(
                         8'h02: begin // READ
                         end
                         8'h03: begin // WRITE
+                            tx_byte_buffer_length <= 4'd8;
+                            crc_reset <= 1'b1;
+                            cur_state <= FLUSH_CRC;
                         end
                     endcase
                 end else if (cur_state == SENDING_LEVELS) begin
@@ -89,6 +117,18 @@ module fake_n64_controller_tx(
                         bit_cnt_clk <= 1'b0; // increment bit count
                         level_cnt_reset <= 1'b1;
                     end 
+                end else if (cur_state == FLUSH_CRC) begin
+                    if (crc_reset) begin
+                        crc_reset <= 1'b0;
+                    end else if (crc_cnt == 4'd8) begin
+                        tx_byte_buffer <= complete_crc;
+                        cur_state <= SENDING_LEVELS;
+                    end else begin
+                        crc_clk <= 1'b0;
+                        crc_cnt_clk <= 1'b0;
+                    end
+
+                    
                 end
             end
         end

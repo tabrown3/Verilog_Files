@@ -42,7 +42,6 @@ module fake_n64_controller_rx
     always @(edge derived_clk) begin
         if (derived_clk) begin
             bit_cnt_reset <= 1'b0;
-            crc_reset <= 1'b0;
         end
 
         if (!derived_clk) begin
@@ -66,8 +65,7 @@ module fake_n64_controller_rx
                                 crc_enable <= 1'b0;
                             end else if (bit_cnt == 9'd280) begin
                                 bit_cnt_reset <= 1'b1;
-                                crc_reset <= 1'b1;
-                                // tx_handoff <= ~tx_handoff;
+                                tx_handoff <= ~tx_handoff;
                             end
                         end
                     end
