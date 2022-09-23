@@ -12,9 +12,9 @@ module fake_n64_controller_rx
 
     wire derived_signal;
     wire derived_clk;
-    reg bit_cnt_reset = 1'b0;
+    wire bit_cnt_reset;
     wire [BIT_CNT_SIZE-1:0] bit_cnt;
-    reg crc_reset = 1'b0;
+    wire crc_reset;
     reg crc_enable = 1'b0;
     wire [7:0] rem;
 
@@ -40,51 +40,42 @@ module fake_n64_controller_rx
         .rem(rem)
     );
 
-    always @(edge derived_clk) begin
-        if (derived_clk) begin
-            bit_cnt_reset <= 1'b0;
-            crc_reset <= 1'b0;
-        end
+    assign bit_cnt_reset = ((cmd == 8'h00 || cmd == 8'h01 || cmd == 8'hff) && bit_cnt == 4'd9) ||
+        (cmd == 8'h02 && bit_cnt == 5'd25) ||
+        (cmd == 8'h03 && bit_cnt == 9'd281);
 
-        if (!derived_clk) begin
-            if (bit_cnt >= 9'h08) begin
-                case (cmd)
-                    8'h00, 8'h01, 8'hff: begin // INFO, BUTTON STATUS, RESET
-                        if (!derived_clk) begin
-                            bit_cnt_reset <= 1'b1;
-                            tx_handoff <= ~tx_handoff;
-                        end
-                    end
-                    8'h02: begin // READ
-                        if (bit_cnt < 9'd24) begin
-                            address[6'd23 - bit_cnt] <= derived_signal;
-                        end else begin
-                            bit_cnt_reset <= 1'b1;
-                            tx_handoff <= ~tx_handoff;
-                        end
-                    end
-                    8'h03: begin // WRITE
-                        if (!derived_clk) begin
-                            if (bit_cnt < 9'd24) begin
-                                address[6'd23 - bit_cnt] <= derived_signal;
+    assign crc_reset = cmd == 8'h03 && bit_cnt == 9'd281;
 
-                                if (bit_cnt == 9'd23) begin
-                                    crc_enable <= 1'b1;
-                                end
-                            end else if (bit_cnt == 9'd279) begin
-                                crc_enable <= 1'b0;
-                            end else if (bit_cnt == 9'd280) begin
-                                bit_cnt_reset <= 1'b1;
-                                crc <= rem;
-                                crc_reset <= 1'b1;
-                                tx_handoff <= ~tx_handoff;
-                            end
-                        end
+    always @(negedge derived_clk) begin
+        if (bit_cnt >= 9'h08) begin
+            case (cmd)
+                8'h00, 8'h01, 8'hff: begin // INFO, BUTTON STATUS, RESET
+                    tx_handoff <= ~tx_handoff;
+                end
+                8'h02: begin // READ
+                    if (bit_cnt < 9'd24) begin
+                        address[6'd23 - bit_cnt] <= derived_signal;
+                    end else begin
+                        tx_handoff <= ~tx_handoff;
                     end
-                endcase
-            end else begin
-                cmd[9'h07 - bit_cnt] <= derived_signal;
-            end
+                end
+                8'h03: begin // WRITE
+                    if (bit_cnt < 9'd24) begin
+                        address[6'd23 - bit_cnt] <= derived_signal;
+
+                        if (bit_cnt == 9'd23) begin
+                            crc_enable <= 1'b1;
+                        end
+                    end else if (bit_cnt == 9'd279) begin
+                        crc_enable <= 1'b0;
+                    end else if (bit_cnt == 9'd280) begin
+                        crc <= rem;
+                        tx_handoff <= ~tx_handoff;
+                    end
+                end
+            endcase
+        end else begin
+            cmd[9'h07 - bit_cnt] <= derived_signal;
         end
     end
 endmodule
