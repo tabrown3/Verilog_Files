@@ -1,11 +1,15 @@
-module generate_crc(
+module generate_crc
+#(
+    parameter SEED = 8'h00
+)
+(
     input reset,
     input enable,
     input clk,
     input data,
     output [7:0] rem
 );
-    reg [7:0] window = 8'h00;
+    reg [7:0] window = SEED;
 
     assign rem = window;
 
