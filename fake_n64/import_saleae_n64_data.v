@@ -2,7 +2,7 @@
 module import_saleae_n64_data(
     output reg data
 );
-    localparam LINE_CNT = 668;
+    localparam LINE_CNT = 2540;
     real elapsed_time [LINE_CNT-1:0];
     reg data_arr [LINE_CNT-1:0];
     reg cmd_arr [LINE_CNT-1:0];
