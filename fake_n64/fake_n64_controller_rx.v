@@ -53,7 +53,15 @@ module fake_n64_controller_rx
                             tx_handoff <= ~tx_handoff;
                         end
                     end
-                    8'h02, 8'h03: begin // READ, WRITE
+                    8'h02: begin // READ
+                        if (bit_cnt < 9'd24) begin
+                            address[6'd23 - bit_cnt] <= derived_signal;
+                        end else begin
+                            bit_cnt_reset <= 1'b1;
+                            tx_handoff <= ~tx_handoff;
+                        end
+                    end
+                    8'h03: begin // WRITE
                         if (!derived_clk) begin
                             if (bit_cnt < 9'd24) begin
                                 address[6'd23 - bit_cnt] <= derived_signal;

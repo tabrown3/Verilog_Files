@@ -24,9 +24,9 @@ module fake_n64_controller_tx(
     wire [2:0] level_cnt;
     reg bit_cnt_reset = 1'b0;
     reg bit_cnt_clk = 1'b1;
-    wire [5:0] bit_cnt;
-    reg [31:0] tx_byte_buffer;
-    reg [5:0] tx_byte_buffer_length;
+    wire [8:0] bit_cnt;
+    reg [263:0] tx_byte_buffer; // 33 bytes
+    reg [8:0] tx_byte_buffer_length; // 0 to 511
     reg [BIT_WIDTH - 1:0] tx_bit_buffer;
 
     reg crc_reset = 1'b0;
@@ -41,7 +41,7 @@ module fake_n64_controller_tx(
         .reset(1'b0),
         .count(level_cnt)
     );
-    n_bit_counter BIT_CNT0(.clk(bit_cnt_clk), .reset(bit_cnt_reset), .count(bit_cnt));
+    n_bit_counter #(.BIT_COUNT(9)) BIT_CNT0(.clk(bit_cnt_clk), .reset(bit_cnt_reset), .count(bit_cnt));
     n_bit_counter #(.BIT_COUNT(4)) CRC_CNT0(
         .clk(crc_cnt_clk),
         .reset(1'b0),
@@ -73,18 +73,21 @@ module fake_n64_controller_tx(
                     case (cmd)
                         8'h00, 8'hff: begin
                             tx_byte_buffer <= 24'h050000; // INFO - OEM controller
-                            tx_byte_buffer_length <= 6'd24;
+                            tx_byte_buffer_length <= 9'd24;
                             cur_state <= SENDING_LEVELS;
                         end
                         8'h01: begin
                             tx_byte_buffer <= 32'h00000000; // STATUS - buttons/analog sticks
-                            tx_byte_buffer_length <= 6'd32;
+                            tx_byte_buffer_length <= 9'd32;
                             cur_state <= SENDING_LEVELS;
                         end
                         8'h02: begin // READ
+                            tx_byte_buffer <= {9'd264{1'b0}}; // "0" 264 times
+                            tx_byte_buffer_length <= 9'd264;
+                            cur_state <= SENDING_LEVELS;
                         end
                         8'h03: begin // WRITE
-                            tx_byte_buffer_length <= 4'd8;
+                            tx_byte_buffer_length <= 9'd8;
                             crc_reset <= 1'b1;
                             cur_state <= FLUSH_CRC;
                         end
@@ -127,8 +130,6 @@ module fake_n64_controller_tx(
                         crc_clk <= 1'b0;
                         crc_cnt_clk <= 1'b0;
                     end
-
-                    
                 end
             end
         end

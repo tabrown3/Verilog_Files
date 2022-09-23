@@ -23,7 +23,6 @@ module import_saleae_n64_data(
             #(elapsed_time[i] - elapsed_time[i - 1]);
             data = data_arr[i];
         end
-
         $stop;
     end
 endmodule
