@@ -1,12 +1,12 @@
 module fake_n64_controller(
     input data_rx,
     input sample_clk,
-    output data_tx
+    output data_tx,
+    output cur_operation
 );
     localparam RX = 1'b0;
     localparam TX = 1'b1;
 
-    wire cur_operation;
     wire [7:0] cmd;
     wire [15:0] address;
     wire [7:0] crc;
