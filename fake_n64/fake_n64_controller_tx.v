@@ -39,13 +39,17 @@ module fake_n64_controller_tx(
     wire level_cnt_clk_wire;
     reg p_bit_cnt_clk = 1'b1;
     wire bit_cnt_clk_wire;
+    reg p_bit_cnt_reset = 1'b0;
+    wire bit_cnt_reset_wire;
+    reg p_crc_clk = 1'b1;
+    wire crc_clk_wire;
 
     n_bit_counter #(.BIT_COUNT(3)) LEVEL_CNT0(
         .clk(level_cnt_clk_wire),
         .reset(1'b0),
         .count(level_cnt)
     );
-    n_bit_counter #(.BIT_COUNT(9)) BIT_CNT0(.clk(bit_cnt_clk_wire), .reset(bit_cnt_reset), .count(bit_cnt));
+    n_bit_counter #(.BIT_COUNT(9)) BIT_CNT0(.clk(bit_cnt_clk_wire), .reset(bit_cnt_reset_wire), .count(bit_cnt));
     n_bit_counter #(.BIT_COUNT(4)) CRC_CNT0(
         .clk(crc_cnt_clk),
         .reset(1'b0),
@@ -56,7 +60,7 @@ module fake_n64_controller_tx(
         .reset(crc_reset),
         .reset_to(crc),
         .enable(crc_enable),
-        .clk(crc_clk),
+        .clk(crc_clk_wire),
         .data(1'b0),
         .rem(complete_crc)
     );
@@ -64,16 +68,18 @@ module fake_n64_controller_tx(
     // this acts as a posedge reset, making any changes to level_cnt_clk persist for half a cycle
     assign level_cnt_clk_wire = ~(level_cnt_clk ^ p_level_cnt_clk);
     assign bit_cnt_clk_wire = ~(bit_cnt_clk ^ p_bit_cnt_clk);
+    assign bit_cnt_reset_wire = (bit_cnt_reset ^ p_bit_cnt_reset);
+    assign crc_clk_wire = ~(crc_clk ^ p_crc_clk);
     always @(posedge sample_clk) begin
         p_level_cnt_clk <= level_cnt_clk;
         p_bit_cnt_clk <= bit_cnt_clk;
+        p_bit_cnt_reset <= bit_cnt_reset;
+        p_crc_clk <= crc_clk;
     end
 
     always @(edge sample_clk) begin
         if (cur_operation == 1'b1) begin // Tx   
             if (sample_clk) begin
-                bit_cnt_reset <= 1'b0;
-                crc_clk <= 1'b1;
                 crc_cnt_clk <= 1'b1;
             end
 
@@ -106,7 +112,7 @@ module fake_n64_controller_tx(
                         if (bit_cnt == tx_byte_buffer_length + 1) begin
                             rx_handoff <= ~rx_handoff;
                             cur_state <= PREPPING_RESPONSE;
-                            bit_cnt_reset <= 1'b1;
+                            bit_cnt_reset <= ~bit_cnt_reset;
                         end // if all data bits have been transmitted
                         else if (bit_cnt == tx_byte_buffer_length) begin
                             tx_bit_buffer <= STOP_BIT;
@@ -135,7 +141,7 @@ module fake_n64_controller_tx(
                         tx_byte_buffer <= complete_crc;
                         cur_state <= SENDING_LEVELS;
                     end else begin
-                        crc_clk <= 1'b0;
+                        crc_clk <= ~crc_clk;
                         crc_cnt_clk <= 1'b0;
                     end
                 end
