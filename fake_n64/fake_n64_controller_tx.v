@@ -19,7 +19,6 @@ module fake_n64_controller_tx(
     localparam [STATE_SIZE-1:0] FLUSH_CRC = {{STATE_SIZE - 2{1'b0}}, 2'b11};
 
     reg [STATE_SIZE - 1:0] cur_state = PREPPING_RESPONSE;
-    reg level_cnt_reset = 1'b0;
     reg level_cnt_clk = 1'b1;
     wire [2:0] level_cnt;
     reg bit_cnt_reset = 1'b0;
@@ -38,15 +37,15 @@ module fake_n64_controller_tx(
 
     reg p_level_cnt_clk = 1'b1;
     wire level_cnt_clk_wire;
-    reg p_level_cnt_reset = 1'b0;
-    wire level_cnt_reset_wire;
+    reg p_bit_cnt_clk = 1'b1;
+    wire bit_cnt_clk_wire;
 
     n_bit_counter #(.BIT_COUNT(3)) LEVEL_CNT0(
         .clk(level_cnt_clk_wire),
         .reset(1'b0),
         .count(level_cnt)
     );
-    n_bit_counter #(.BIT_COUNT(9)) BIT_CNT0(.clk(bit_cnt_clk), .reset(bit_cnt_reset), .count(bit_cnt));
+    n_bit_counter #(.BIT_COUNT(9)) BIT_CNT0(.clk(bit_cnt_clk_wire), .reset(bit_cnt_reset), .count(bit_cnt));
     n_bit_counter #(.BIT_COUNT(4)) CRC_CNT0(
         .clk(crc_cnt_clk),
         .reset(1'b0),
@@ -64,16 +63,15 @@ module fake_n64_controller_tx(
 
     // this acts as a posedge reset, making any changes to level_cnt_clk persist for half a cycle
     assign level_cnt_clk_wire = ~(level_cnt_clk ^ p_level_cnt_clk);
-    assign level_cnt_reset_wire = (level_cnt_reset ^ p_level_cnt_reset);
+    assign bit_cnt_clk_wire = ~(bit_cnt_clk ^ p_bit_cnt_clk);
     always @(posedge sample_clk) begin
         p_level_cnt_clk <= level_cnt_clk;
-        p_level_cnt_reset <= level_cnt_reset;
+        p_bit_cnt_clk <= bit_cnt_clk;
     end
 
     always @(edge sample_clk) begin
         if (cur_operation == 1'b1) begin // Tx   
             if (sample_clk) begin
-                bit_cnt_clk <= 1'b1;
                 bit_cnt_reset <= 1'b0;
                 crc_clk <= 1'b1;
                 crc_cnt_clk <= 1'b1;
@@ -128,8 +126,7 @@ module fake_n64_controller_tx(
                     end
                     
                     if (level_cnt == BIT_WIDTH - 1'b1) begin
-                        bit_cnt_clk <= 1'b0; // increment bit count
-                        level_cnt_reset <= ~level_cnt_reset;
+                        bit_cnt_clk <= ~bit_cnt_clk; // increment bit count
                     end 
                 end else if (cur_state == FLUSH_CRC) begin
                     if (crc_reset) begin
