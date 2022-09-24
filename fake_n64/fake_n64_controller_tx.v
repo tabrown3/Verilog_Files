@@ -36,8 +36,13 @@ module fake_n64_controller_tx(
     reg crc_cnt_clk = 1'b1;
     wire [3:0] crc_cnt;
 
+    reg p_level_cnt_clk = 1'b1;
+    wire level_cnt_clk_wire;
+    reg p_level_cnt_reset = 1'b0;
+    wire level_cnt_reset_wire;
+
     n_bit_counter #(.BIT_COUNT(3)) LEVEL_CNT0(
-        .clk(level_cnt_clk),
+        .clk(level_cnt_clk_wire),
         .reset(1'b0),
         .count(level_cnt)
     );
@@ -57,11 +62,17 @@ module fake_n64_controller_tx(
         .rem(complete_crc)
     );
 
+    // this acts as a posedge reset, making any changes to level_cnt_clk persist for half a cycle
+    assign level_cnt_clk_wire = ~(level_cnt_clk ^ p_level_cnt_clk);
+    assign level_cnt_reset_wire = (level_cnt_reset ^ p_level_cnt_reset);
+    always @(posedge sample_clk) begin
+        p_level_cnt_clk <= level_cnt_clk;
+        p_level_cnt_reset <= level_cnt_reset;
+    end
+
     always @(edge sample_clk) begin
         if (cur_operation == 1'b1) begin // Tx   
             if (sample_clk) begin
-                level_cnt_clk <= 1'b1;
-                level_cnt_reset <= 1'b0;
                 bit_cnt_clk <= 1'b1;
                 bit_cnt_reset <= 1'b0;
                 crc_clk <= 1'b1;
@@ -102,23 +113,23 @@ module fake_n64_controller_tx(
                         else if (bit_cnt == tx_byte_buffer_length) begin
                             tx_bit_buffer <= STOP_BIT;
                             data_tx <= 1'b0;
-                            level_cnt_clk <= 1'b0;
+                            level_cnt_clk <= ~level_cnt_clk;
                         end else begin // otherwise load the next data bit
                             tx_bit_buffer <= wire_encoding(
                                 tx_byte_buffer[tx_byte_buffer_length - 1 - bit_cnt]
                             );
 
                             data_tx <= 1'b0;
-                            level_cnt_clk <= 1'b0;
+                            level_cnt_clk <= ~level_cnt_clk;
                         end
                     end else begin // otherwise transmit the next level in the bit
                         data_tx <= tx_bit_buffer[BIT_WIDTH - 1 - level_cnt];
-                        level_cnt_clk <= 1'b0; // and increment level count
+                        level_cnt_clk <= ~level_cnt_clk; // and increment level count
                     end
                     
                     if (level_cnt == BIT_WIDTH - 1'b1) begin
                         bit_cnt_clk <= 1'b0; // increment bit count
-                        level_cnt_reset <= 1'b1;
+                        level_cnt_reset <= ~level_cnt_reset;
                     end 
                 end else if (cur_state == FLUSH_CRC) begin
                     if (crc_reset) begin
