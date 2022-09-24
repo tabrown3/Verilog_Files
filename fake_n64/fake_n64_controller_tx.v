@@ -43,6 +43,8 @@ module fake_n64_controller_tx(
     wire bit_cnt_reset_wire;
     reg p_crc_clk = 1'b1;
     wire crc_clk_wire;
+    reg p_crc_cnt_clk = 1'b1;
+    wire crc_cnt_clk_wire;
 
     n_bit_counter #(.BIT_COUNT(3)) LEVEL_CNT0(
         .clk(level_cnt_clk_wire),
@@ -51,7 +53,7 @@ module fake_n64_controller_tx(
     );
     n_bit_counter #(.BIT_COUNT(9)) BIT_CNT0(.clk(bit_cnt_clk_wire), .reset(bit_cnt_reset_wire), .count(bit_cnt));
     n_bit_counter #(.BIT_COUNT(4)) CRC_CNT0(
-        .clk(crc_cnt_clk),
+        .clk(crc_cnt_clk_wire),
         .reset(1'b0),
         .count(crc_cnt)
     );
@@ -70,19 +72,17 @@ module fake_n64_controller_tx(
     assign bit_cnt_clk_wire = ~(bit_cnt_clk ^ p_bit_cnt_clk);
     assign bit_cnt_reset_wire = (bit_cnt_reset ^ p_bit_cnt_reset);
     assign crc_clk_wire = ~(crc_clk ^ p_crc_clk);
+    assign crc_cnt_clk_wire = ~(crc_cnt_clk ^ p_crc_cnt_clk);
     always @(posedge sample_clk) begin
         p_level_cnt_clk <= level_cnt_clk;
         p_bit_cnt_clk <= bit_cnt_clk;
         p_bit_cnt_reset <= bit_cnt_reset;
         p_crc_clk <= crc_clk;
+        p_crc_cnt_clk <= crc_cnt_clk;
     end
 
     always @(edge sample_clk) begin
         if (cur_operation == 1'b1) begin // Tx   
-            if (sample_clk) begin
-                crc_cnt_clk <= 1'b1;
-            end
-
             if (!sample_clk) begin
                 if (cur_state == PREPPING_RESPONSE) begin
                     case (cmd)
@@ -142,7 +142,7 @@ module fake_n64_controller_tx(
                         cur_state <= SENDING_LEVELS;
                     end else begin
                         crc_clk <= ~crc_clk;
-                        crc_cnt_clk <= 1'b0;
+                        crc_cnt_clk <= ~crc_cnt_clk;
                     end
                 end
             end
