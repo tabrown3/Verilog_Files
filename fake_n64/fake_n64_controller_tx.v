@@ -54,7 +54,7 @@ module fake_n64_controller_tx(
     n_bit_counter #(.BIT_COUNT(9)) BIT_CNT0(.clk(bit_cnt_clk_wire), .reset(bit_cnt_reset_wire), .count(bit_cnt));
     n_bit_counter #(.BIT_COUNT(4)) CRC_CNT0(
         .clk(crc_cnt_clk_wire),
-        .reset(1'b0),
+        .reset(crc_reset),
         .count(crc_cnt)
     );
 
