@@ -12,15 +12,19 @@ module fake_n64_controller_rx
 
     wire derived_signal;
     wire derived_clk;
-    wire bit_cnt_reset;
+    wire bit_cnt_reset_wire;
+    reg bit_cnt_reset = 1'b0;
+    reg p_bit_cnt_reset = 1'b0;
     wire [BIT_CNT_SIZE-1:0] bit_cnt;
-    wire crc_reset;
+    wire crc_reset_wire;
+    reg crc_reset = 1'b0;
+    reg p_crc_reset = 1'b0;
     reg crc_enable = 1'b0;
     wire [7:0] rem;
 
     n_bit_counter #(.BIT_COUNT(BIT_CNT_SIZE)) BIT_CNT0(
         .clk(derived_clk),
-        .reset(bit_cnt_reset),
+        .reset(bit_cnt_reset_wire),
         .count(bit_cnt)
     );
 
@@ -33,29 +37,32 @@ module fake_n64_controller_rx
     );
 
     generate_crc CRC0(
-        .reset(crc_reset),
+        .reset(crc_reset_wire),
         .enable(crc_enable),
         .clk(derived_clk),
         .data(derived_signal),
         .rem(rem)
     );
 
-    assign bit_cnt_reset = ((cmd == 8'h00 || cmd == 8'h01 || cmd == 8'hff) && bit_cnt == 4'd9) ||
-        (cmd == 8'h02 && bit_cnt == 5'd25) ||
-        (cmd == 8'h03 && bit_cnt == 9'd281);
-
-    assign crc_reset = cmd == 8'h03 && bit_cnt == 9'd281;
+    assign bit_cnt_reset_wire = (bit_cnt_reset^p_bit_cnt_reset);
+    assign crc_reset_wire = (crc_reset^p_crc_reset);
+    always @(posedge derived_clk) begin
+        p_bit_cnt_reset <= bit_cnt_reset;
+        p_crc_reset <= crc_reset;
+    end
 
     always @(negedge derived_clk) begin
         if (bit_cnt >= 9'h08) begin
             case (cmd)
                 8'h00, 8'h01, 8'hff: begin // INFO, BUTTON STATUS, RESET
+                    bit_cnt_reset <= ~bit_cnt_reset;
                     tx_handoff <= ~tx_handoff;
                 end
                 8'h02: begin // READ
                     if (bit_cnt < 9'd24) begin
                         address[6'd23 - bit_cnt] <= derived_signal;
                     end else begin
+                        bit_cnt_reset <= ~bit_cnt_reset;
                         tx_handoff <= ~tx_handoff;
                     end
                 end
@@ -70,6 +77,8 @@ module fake_n64_controller_rx
                         crc_enable <= 1'b0;
                     end else if (bit_cnt == 9'd280) begin
                         crc <= rem;
+                        bit_cnt_reset <= ~bit_cnt_reset;
+                        crc_reset <= ~crc_reset;
                         tx_handoff <= ~tx_handoff;
                     end
                 end
