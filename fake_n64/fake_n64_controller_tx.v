@@ -9,7 +9,7 @@ module fake_n64_controller_tx(
     localparam LEVEL_WIDTH = 4'h2; // in clk cycles
     localparam BIT_WIDTH = 4'h4*LEVEL_WIDTH; // in clk cycles
     localparam STOP_BIT = {{LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b0}}, {LEVEL_WIDTH{1'b1}},
-        {LEVEL_WIDTH{1'bz}}}; // L,L,H,Z
+        {LEVEL_WIDTH{1'b1}}}; // L,L,H,H
 
     localparam STATE_SIZE = 4; // bits
     // STATES
