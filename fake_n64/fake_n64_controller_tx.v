@@ -105,6 +105,9 @@ module fake_n64_controller_tx(
                         crc_reset <= 1'b1;
                         cur_state <= FLUSH_CRC;
                     end
+                    default: begin
+                        rx_handoff <= ~rx_handoff;
+                    end
                 endcase
             end else if (cur_state == SENDING_LEVELS) begin
                 if (level_cnt == 1'b0) begin

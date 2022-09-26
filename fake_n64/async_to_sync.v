@@ -4,7 +4,8 @@ module async_to_sync(
     input data,
     input sample_clk,
     output reg derived_signal = 1'b1,
-    output derived_clk
+    output derived_clk,
+    output reg tx_handoff = 1'b0
 );
     localparam STATE_SIZE = 4; // bits
     // STATES
@@ -77,7 +78,8 @@ module async_to_sync(
 
                         derived_signal <= 1'b1;
                         derived_clk_reg <= ~derived_clk_reg;
-
+                        
+                        tx_handoff <= ~tx_handoff;
                         next_state <= AWAITING_FIRST_BIT;
                     end
                 end

@@ -3,7 +3,7 @@ module fake_n64_controller_rx
     input cur_operation,
     input data_rx,
     input sample_clk,
-    output reg tx_handoff = 1'b0,
+    output tx_handoff,
     output reg [7:0] cmd = 8'hfe,
     output reg [15:0] address = 16'h0000,
     output reg [7:0] crc
@@ -33,7 +33,8 @@ module fake_n64_controller_rx
         .data(data_rx),
         .sample_clk(sample_clk),
         .derived_signal(derived_signal),
-        .derived_clk(derived_clk)
+        .derived_clk(derived_clk),
+        .tx_handoff(tx_handoff)
     );
 
     generate_crc CRC0(
@@ -56,14 +57,12 @@ module fake_n64_controller_rx
             case (cmd)
                 8'h00, 8'h01, 8'hff: begin // INFO, BUTTON STATUS, RESET
                     bit_cnt_reset <= ~bit_cnt_reset;
-                    tx_handoff <= ~tx_handoff;
                 end
                 8'h02: begin // READ
                     if (bit_cnt < 9'd24) begin
                         address[6'd23 - bit_cnt] <= derived_signal;
                     end else begin
                         bit_cnt_reset <= ~bit_cnt_reset;
-                        tx_handoff <= ~tx_handoff;
                     end
                 end
                 8'h03: begin // WRITE
@@ -79,7 +78,6 @@ module fake_n64_controller_rx
                         crc <= rem;
                         bit_cnt_reset <= ~bit_cnt_reset;
                         crc_reset <= ~crc_reset;
-                        tx_handoff <= ~tx_handoff;
                     end
                 end
             endcase
