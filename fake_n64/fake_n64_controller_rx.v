@@ -4,7 +4,7 @@ module fake_n64_controller_rx
     input data_rx,
     input sample_clk,
     output tx_handoff,
-    output reg [7:0] cmd = 8'hfe,
+    output reg [7:0] cmd = 8'h00,
     output reg [15:0] address = 16'h0000,
     output reg [7:0] crc
 );
@@ -21,6 +21,7 @@ module fake_n64_controller_rx
     reg p_crc_reset = 1'b0;
     reg crc_enable = 1'b0;
     wire [7:0] rem;
+    reg [7:0] inner_cmd = 8'h00;
 
     n_bit_counter #(.BIT_COUNT(BIT_CNT_SIZE)) BIT_CNT0(
         .clk(derived_clk),
@@ -45,8 +46,8 @@ module fake_n64_controller_rx
         .rem(rem)
     );
 
-    assign bit_cnt_reset_wire = (bit_cnt_reset^p_bit_cnt_reset);
-    assign crc_reset_wire = (crc_reset^p_crc_reset);
+    assign bit_cnt_reset_wire = (bit_cnt_reset^p_bit_cnt_reset) | cur_operation;
+    assign crc_reset_wire = (crc_reset^p_crc_reset) | cur_operation;
     always @(posedge derived_clk) begin
         p_bit_cnt_reset <= bit_cnt_reset;
         p_crc_reset <= crc_reset;
@@ -54,15 +55,19 @@ module fake_n64_controller_rx
 
     always @(negedge derived_clk) begin
         if (bit_cnt >= 9'h08) begin
-            case (cmd)
+            case (inner_cmd)
                 8'h00, 8'h01, 8'hff: begin // INFO, BUTTON STATUS, RESET
                     bit_cnt_reset <= ~bit_cnt_reset;
+                    cmd <= inner_cmd;
+                    inner_cmd <= 8'h00;
                 end
                 8'h02: begin // READ
                     if (bit_cnt < 9'd24) begin
                         address[6'd23 - bit_cnt] <= derived_signal;
                     end else begin
                         bit_cnt_reset <= ~bit_cnt_reset;
+                        cmd <= inner_cmd;
+                        inner_cmd <= 8'h00;
                     end
                 end
                 8'h03: begin // WRITE
@@ -77,12 +82,18 @@ module fake_n64_controller_rx
                     end else if (bit_cnt == 9'd280) begin
                         crc <= rem;
                         bit_cnt_reset <= ~bit_cnt_reset;
+                        cmd <= inner_cmd;
+                        inner_cmd <= 8'h00;
                         crc_reset <= ~crc_reset;
                     end
                 end
+                default: begin
+                    inner_cmd <= 8'h00;
+                    cmd <= 8'h00;
+                end
             endcase
         end else begin
-            cmd[9'h07 - bit_cnt] <= derived_signal;
+            inner_cmd[9'h07 - bit_cnt] <= derived_signal;
         end
     end
 endmodule
