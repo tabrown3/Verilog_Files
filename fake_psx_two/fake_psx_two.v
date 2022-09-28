@@ -1,4 +1,8 @@
-module fake_psx_two(
+module fake_psx_two
+#(
+    parameter [31:0] BOOT_TIME = 16E6 // 8 seconds at 500ns per cycle
+)
+(
     input clk,
     output reg psx_clk = 1'b1,
     output reg cmd = 1'b1,
@@ -21,7 +25,6 @@ module fake_psx_two(
     localparam [STATE_SIZE-1:0] READ_CONT_STATE_2 = 4'hb;
     localparam [STATE_SIZE-1:0] RAISE_ATT = 4'hc;
     localparam [STATE_SIZE-1:0] SEND_FAKE_START_CMD = 4'hd;
-    localparam [STATE_SIZE-1:0] WAIT = 4'he;
     // END STATES
 
     reg [STATE_SIZE-1'b1:0] cur_state = STARTUP;
@@ -32,13 +35,16 @@ module fake_psx_two(
     always @(negedge clk) begin
         case (cur_state)
             STARTUP: begin
-                time_to_wait <= 16E6; // 8 seconds at 500ns per cycle
-                waited_time <= waited_time + 1;
-                if (waited_time >= time_to_wait) begin
-                    cur_state <= ATT_PULSE;
-                    redirect_to <= LOWER_ATT;
-                    time_to_wait <= 0;
-                    waited_time <= 0;
+                if (time_to_wait == 0) begin
+                    time_to_wait <= BOOT_TIME;
+                end else begin
+                    waited_time <= waited_time + 1;
+                    if (waited_time >= time_to_wait) begin
+                        cur_state <= ATT_PULSE;
+                        redirect_to <= LOWER_ATT;
+                        time_to_wait <= 0;
+                        waited_time <= 0;
+                    end
                 end
             end
             ATT_PULSE: begin
