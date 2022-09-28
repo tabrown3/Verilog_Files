@@ -9,6 +9,7 @@ module tb_fake_n64_controller();
     fake_n64_controller N64_CONT0(
         .data_rx(console_data),
         .sample_clk(sample_clk),
+        .btn(2'b00),
         .data_tx(controller_data)
     );
 

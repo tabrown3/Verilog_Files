@@ -1,6 +1,7 @@
 module fake_n64_controller(
     input data_rx,
     input sample_clk,
+    input [1:0] btn,
     output data_tx,
     output cur_operation
 );
@@ -30,6 +31,7 @@ module fake_n64_controller(
         .cur_operation(cur_operation),
         .cmd(cmd),
         .crc(crc),
+        .btn(btn),
         .rx_handoff(rx_handoff),
         .data_tx(data_tx)
     );
