@@ -26,11 +26,14 @@ module fake_psx_two
     localparam [STATE_SIZE-1:0] RAISE_ATT = 4'hc;
     localparam [STATE_SIZE-1:0] SEND_FAKE_START_CMD = 4'hd;
     // END STATES
+    localparam [7:0] START_CMD = 8'h01;
+    localparam [7:0] BEGIN_TX_CMD = 8'h42;
 
     reg [STATE_SIZE-1'b1:0] cur_state = STARTUP;
     reg [STATE_SIZE-1'b1:0] redirect_to;
     reg [31:0] time_to_wait = 0;
     reg [31:0] waited_time = 0;
+    reg [7:0] bit_cnt = 8'h00;
 
     always @(negedge clk) begin
         case (cur_state)
@@ -64,6 +67,32 @@ module fake_psx_two
             LOWER_ATT: begin
                 att <= 1'b0;
                 cur_state <= SEND_START_CMD;
+            end
+            SEND_START_CMD: begin
+                if (time_to_wait == 0) begin
+                    bit_cnt <= 8'h00;
+                    time_to_wait <= 140; // 70us
+                end else begin
+                    if(waited_time < time_to_wait) begin
+                        waited_time <= waited_time + 1;
+                        if (waited_time >= 76) begin
+                            if (waited_time < (80 + ((bit_cnt)*8))) begin // 38us + bit_cnt*2us
+                                psx_clk <= 1'b0;
+                                cmd <= START_CMD[bit_cnt];
+                            end else if (waited_time < (83 + ((bit_cnt)*8))) begin
+                                psx_clk <= 1'b1;
+                            end else begin
+                                bit_cnt <= bit_cnt + 1'b1;
+                            end
+                        end
+                    end else begin
+                        cmd <= 1'b1;
+                        cur_state <= AWAIT_START_ACK;
+                        time_to_wait <= 0;
+                        waited_time <= 0;
+                        bit_cnt <= 8'h00;
+                    end
+                end
             end
         endcase
     end
