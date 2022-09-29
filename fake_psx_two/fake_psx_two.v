@@ -36,6 +36,7 @@ module fake_psx_two
             STARTUP: begin
                 if (time_to_wait == 0) begin
                     time_to_wait <= BOOT_TIME;
+                    waited_time <= 0;
                 end else begin
                     waited_time <= waited_time + 1;
                     if (waited_time >= time_to_wait) begin
@@ -50,6 +51,7 @@ module fake_psx_two
                 if (time_to_wait == 0) begin
                     att <= 1'b0;
                     time_to_wait <= 15; // 7.5us at 500ns per cycle
+                    waited_time <= 0;
                 end else begin
                     waited_time <= waited_time + 1;
                     if (waited_time >= time_to_wait) begin
@@ -68,6 +70,21 @@ module fake_psx_two
                 tx_cmd(START_CMD, AWAIT_ACK, SEND_BEGIN_TX_CMD, 76);
             end
             AWAIT_ACK: begin
+                if (time_to_wait == 0) begin
+                    time_to_wait <= 120; // 60us
+                    waited_time <= 0;
+                end else begin
+                    waited_time <= waited_time + 1;
+                    if (waited_time < time_to_wait) begin
+                        if (!ack) begin
+                            cur_state <= redirect_to;
+                        end
+                    end else begin // time out after 60us
+                        cur_state <= RAISE_ATT;
+                        time_to_wait <= 0;
+                        waited_time <= 0;
+                    end
+                end
             end
         endcase
     end
@@ -81,6 +98,7 @@ module fake_psx_two
         if (time_to_wait == 0) begin
             bit_cnt <= 8'h00;
             time_to_wait <= initial_delay + 64; // 8 bits take 64 cycles to tx
+            waited_time <= 0;
         end else begin
             if(waited_time < time_to_wait) begin
                 waited_time <= waited_time + 1;
