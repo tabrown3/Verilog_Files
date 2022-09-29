@@ -15,16 +15,12 @@ module fake_psx_two
     localparam [STATE_SIZE-1:0] ATT_PULSE = 4'h1;
     localparam [STATE_SIZE-1:0] LOWER_ATT = 4'h2;
     localparam [STATE_SIZE-1:0] SEND_START_CMD = 4'h3;
-    localparam [STATE_SIZE-1:0] AWAIT_START_ACK = 4'h4;
+    localparam [STATE_SIZE-1:0] AWAIT_ACK = 4'h4;
     localparam [STATE_SIZE-1:0] SEND_BEGIN_TX_CMD = 4'h5;
-    localparam [STATE_SIZE-1:0] AWAIT_BEGIN_TX_ACK = 4'h6;
-    localparam [STATE_SIZE-1:0] READ_PREAMBLE = 4'h7;
-    localparam [STATE_SIZE-1:0] AWAIT_PREAMBLE_ACK = 4'h8;
-    localparam [STATE_SIZE-1:0] READ_CONT_STATE_1 = 4'h9;
-    localparam [STATE_SIZE-1:0] AWAIT_CONT_STATE_1_ACK = 4'ha;
-    localparam [STATE_SIZE-1:0] READ_CONT_STATE_2 = 4'hb;
-    localparam [STATE_SIZE-1:0] RAISE_ATT = 4'hc;
-    localparam [STATE_SIZE-1:0] SEND_FAKE_START_CMD = 4'hd;
+    localparam [STATE_SIZE-1:0] READ_PREAMBLE = 4'h6;
+    localparam [STATE_SIZE-1:0] READ_CONT_STATE_1 = 4'h7;
+    localparam [STATE_SIZE-1:0] READ_CONT_STATE_2 = 4'h8;
+    localparam [STATE_SIZE-1:0] RAISE_ATT = 4'h9;
     // END STATES
     localparam [7:0] START_CMD = 8'h01;
     localparam [7:0] BEGIN_TX_CMD = 8'h42;
@@ -69,24 +65,30 @@ module fake_psx_two
                 cur_state <= SEND_START_CMD;
             end
             SEND_START_CMD: begin
-                tx_cmd(START_CMD);
+                tx_cmd(START_CMD, AWAIT_ACK, SEND_BEGIN_TX_CMD, 76);
+            end
+            AWAIT_ACK: begin
             end
         endcase
     end
 
+    // 8 bits take 64 cycles to tx
     task tx_cmd;
-        input [7:0] cmd_to_tx;
+        input [7:0] in_cmd;
+        input [3:0] in_cur_state;
+        input [3:0] in_redirect_to;
+        input [31:0] initial_delay;
         if (time_to_wait == 0) begin
             bit_cnt <= 8'h00;
-            time_to_wait <= 140; // 70us
+            time_to_wait <= initial_delay + 64; // 8 bits take 64 cycles to tx
         end else begin
             if(waited_time < time_to_wait) begin
                 waited_time <= waited_time + 1;
-                if (waited_time >= 76) begin
-                    if (waited_time < (80 + ((bit_cnt)*8))) begin // 38us + bit_cnt*4us
+                if (waited_time >= initial_delay) begin
+                    if (waited_time < (initial_delay + 4 + ((bit_cnt)*8))) begin // 38us + bit_cnt*4us
                         psx_clk <= 1'b0;
-                        cmd <= cmd_to_tx[bit_cnt];
-                    end else if (waited_time < (83 + ((bit_cnt)*8))) begin
+                        cmd <= in_cmd[bit_cnt];
+                    end else if (waited_time < (initial_delay + 7 + ((bit_cnt)*8))) begin
                         psx_clk <= 1'b1;
                     end else begin
                         bit_cnt <= bit_cnt + 1'b1;
@@ -94,7 +96,8 @@ module fake_psx_two
                 end
             end else begin
                 cmd <= 1'b1;
-                cur_state <= AWAIT_START_ACK;
+                cur_state <= in_cur_state;
+                redirect_to <= in_redirect_to;
                 time_to_wait <= 0;
                 waited_time <= 0;
                 bit_cnt <= 8'h00;
