@@ -82,6 +82,8 @@ module fake_psx_two
                     if (waited_time < time_to_wait) begin
                         if (!ack) begin
                             cur_state <= redirect_to;
+                            time_to_wait <= 0;
+                            waited_time <= 0;
                         end
                     end else begin // time out after 60us
                         cur_state <= RAISE_ATT;
@@ -100,21 +102,23 @@ module fake_psx_two
                 tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_2, 14, data_byte);
             end
             READ_CONT_STATE_2: begin
-                tx_cmd(NO_OP, AWAIT_ACK, RAISE_ATT, 14, data_byte);
+                tx_cmd(NO_OP, RAISE_ATT, RAISE_ATT, 14, data_byte);
             end
             RAISE_ATT: begin
                 if (time_to_wait == 0) begin
                     time_to_wait <= 250;
                     waited_time <= 0;
-                end else if (waited_time >= 14) begin
+                end else begin
                     waited_time <= waited_time + 1;
-                    if (waited_time < 250) begin
-                        att <= 1'b1;
-                    end else begin
-                        time_to_wait <= 0;
-                        waited_time <= 0;
-                        cur_state <= ATT_PULSE;
-                        redirect_to <= LOWER_ATT;
+                    if (waited_time >= 14) begin
+                        if (waited_time < 250) begin
+                            att <= 1'b1;
+                        end else begin
+                            time_to_wait <= 0;
+                            waited_time <= 0;
+                            cur_state <= ATT_PULSE;
+                            redirect_to <= LOWER_ATT;
+                        end
                     end
                 end
             end
