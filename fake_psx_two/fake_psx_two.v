@@ -4,6 +4,8 @@ module fake_psx_two
 )
 (
     input clk,
+    input data,
+    input ack,
     output reg psx_clk = 1'b1,
     output reg cmd = 1'b1,
     output reg att = 1'b1
@@ -30,6 +32,7 @@ module fake_psx_two
     reg [31:0] time_to_wait = 0;
     reg [31:0] waited_time = 0;
     reg [7:0] bit_cnt = 8'h00;
+    reg [7:0] data_byte;
 
     always @(negedge clk) begin
         case (cur_state)
@@ -67,7 +70,7 @@ module fake_psx_two
                 cur_state <= SEND_START_CMD;
             end
             SEND_START_CMD: begin
-                tx_cmd(START_CMD, AWAIT_ACK, SEND_BEGIN_TX_CMD, 76);
+                tx_cmd(START_CMD, AWAIT_ACK, SEND_BEGIN_TX_CMD, 76, data_byte);
             end
             AWAIT_ACK: begin
                 if (time_to_wait == 0) begin
@@ -95,6 +98,7 @@ module fake_psx_two
         input [3:0] in_cur_state;
         input [3:0] in_redirect_to;
         input [31:0] initial_delay;
+        output reg [7:0] out_data;
         if (time_to_wait == 0) begin
             bit_cnt <= 8'h00;
             time_to_wait <= initial_delay + 64; // 8 bits take 64 cycles to tx
@@ -107,6 +111,10 @@ module fake_psx_two
                         psx_clk <= 1'b0;
                         cmd <= in_cmd[bit_cnt];
                     end else if (waited_time < (initial_delay + 7 + ((bit_cnt)*8))) begin
+                        if (psx_clk == 1'b0) begin
+                            out_data[bit_cnt] <= data;
+                        end
+
                         psx_clk <= 1'b1;
                     end else begin
                         bit_cnt <= bit_cnt + 1'b1;
