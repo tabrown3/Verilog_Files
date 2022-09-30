@@ -28,6 +28,11 @@ module tb_fake_psx_two();
         ack = 1'b0;
         #4;
         ack = 1'b1;
+
+        #700;
+        ack = 1'b0;
+        #4;
+        ack = 1'b1;
     end
 
     initial begin

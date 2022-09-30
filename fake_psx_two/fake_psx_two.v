@@ -24,6 +24,7 @@ module fake_psx_two
     localparam [STATE_SIZE-1:0] READ_CONT_STATE_2 = 4'h8;
     localparam [STATE_SIZE-1:0] RAISE_ATT = 4'h9;
     // END STATES
+    localparam [7:0] NO_OP = 8'h00;
     localparam [7:0] START_CMD = 8'h01;
     localparam [7:0] BEGIN_TX_CMD = 8'h42;
 
@@ -86,6 +87,34 @@ module fake_psx_two
                         cur_state <= RAISE_ATT;
                         time_to_wait <= 0;
                         waited_time <= 0;
+                    end
+                end
+            end
+            SEND_BEGIN_TX_CMD: begin
+                tx_cmd(BEGIN_TX_CMD, AWAIT_ACK, READ_PREAMBLE, 60, data_byte);
+            end
+            READ_PREAMBLE: begin
+                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_1, 14, data_byte);
+            end
+            READ_CONT_STATE_1: begin
+                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_2, 14, data_byte);
+            end
+            READ_CONT_STATE_2: begin
+                tx_cmd(NO_OP, AWAIT_ACK, RAISE_ATT, 14, data_byte);
+            end
+            RAISE_ATT: begin
+                if (time_to_wait == 0) begin
+                    time_to_wait <= 250;
+                    waited_time <= 0;
+                end else if (waited_time >= 14) begin
+                    waited_time <= waited_time + 1;
+                    if (waited_time < 250) begin
+                        att <= 1'b1;
+                    end else begin
+                        time_to_wait <= 0;
+                        waited_time <= 0;
+                        cur_state <= ATT_PULSE;
+                        redirect_to <= LOWER_ATT;
                     end
                 end
             end
