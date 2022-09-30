@@ -54,15 +54,18 @@ module fake_psx_two
             ATT_PULSE: begin
                 if (time_to_wait == 0) begin
                     att <= 1'b0;
-                    time_to_wait <= 15; // 7.5us at 500ns per cycle
+                    time_to_wait <= 32E3;
                     waited_time <= 0;
                 end else begin
                     waited_time <= waited_time + 1;
-                    if (waited_time >= time_to_wait) begin
-                        att <= 1'b1;
-                        cur_state <= redirect_to;
-                        time_to_wait <= 0;
-                        waited_time <= 0;
+                    if (waited_time >= 15) begin
+                        if (waited_time < time_to_wait) begin
+                            att <= 1'b1;
+                        end else begin
+                            cur_state <= redirect_to;
+                            time_to_wait <= 0;
+                            waited_time <= 0;
+                        end
                     end
                 end
             end
@@ -111,7 +114,7 @@ module fake_psx_two
                 end else begin
                     waited_time <= waited_time + 1;
                     if (waited_time >= 14) begin
-                        if (waited_time < 250) begin
+                        if (waited_time < time_to_wait) begin
                             att <= 1'b1;
                         end else begin
                             time_to_wait <= 0;

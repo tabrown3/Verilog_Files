@@ -23,7 +23,7 @@ module tb_fake_psx_two();
     end
 
     initial begin
-        #(50E4);
+        #(50E4+(32E3*5));
         #900;
         ack = 1'b0;
         #6;
@@ -46,7 +46,7 @@ module tb_fake_psx_two();
     end
 
     initial begin
-        #(60E4);
+        #(15E5);
         $stop;
     end
 endmodule
