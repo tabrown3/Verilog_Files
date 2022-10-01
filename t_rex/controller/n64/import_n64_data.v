@@ -1,5 +1,5 @@
 `timescale 1s/1ns
-module import_saleae_n64_data(
+module import_n64_data(
     output reg data
 );
     localparam LINE_CNT = 2540;

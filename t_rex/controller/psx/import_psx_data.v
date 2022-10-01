@@ -1,5 +1,5 @@
 `timescale 1s/1ns
-module import_saleae_data(
+module import_psx_data(
     output reg psx_clk,
     output reg cmd,
     output reg att

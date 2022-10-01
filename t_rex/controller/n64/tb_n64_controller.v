@@ -2,7 +2,7 @@
 module tb_n64_controller();
 
     wire console_data;
-    import_saleae_n64_data FILE0(.data(console_data));
+    import_n64_data N640(.data(console_data));
 
     reg sample_clk;
     wire controller_data;
