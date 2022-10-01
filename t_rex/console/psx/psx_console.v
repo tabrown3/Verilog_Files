@@ -9,7 +9,7 @@ module psx_console
     output reg psx_clk = 1'b1,
     output reg cmd = 1'b1,
     output reg att = 1'b1,
-    output button_state
+    output [15:0] button_state
 );
 
     localparam [3:0] STATE_SIZE = 4'h4;
@@ -165,7 +165,7 @@ module psx_console
                         cmd <= in_cmd[bit_cnt];
                     end else if (waited_time < (initial_delay + 7 + ((bit_cnt)*8))) begin
                         if (psx_clk == 1'b0) begin
-                            temp_data[bit_cnt] <= data;
+                            temp_data[4'h7 - bit_cnt] <= data;
                         end
 
                         psx_clk <= 1'b1;
