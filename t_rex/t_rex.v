@@ -39,7 +39,7 @@ module t_rex(
     (
         .data_rx(n64_rx),
         .sample_clk(sample_clk),
-        .button_state(button_state),
+        .button_state(n64_btns),
         .data_tx(n64_tx)
     );
 
