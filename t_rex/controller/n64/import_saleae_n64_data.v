@@ -10,7 +10,7 @@ module import_saleae_n64_data(
     integer in_file, i;
 
     initial begin
-        in_file = $fopen("data/n64_console_data.csv", "r");
+        in_file = $fopen("n64_console_data.csv", "r");
 
         for (i = 0; i < LINE_CNT; i = i + 1) begin
             //Time [s], Data
