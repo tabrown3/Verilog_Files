@@ -1,15 +1,13 @@
-`include "controller/n64/n64_controller.v"
-`include "console/psx/psx_console.v"
-
 module t_rex(
     input sample_clk,
     input psx_data,
     input psx_ack,
     input n64_rx,
     output n64_tx,
-    output reg psx_clk = 1'b1,
-    output reg psx_cmd = 1'b1,
-    output reg psx_att = 1'b1
+    output n64_cur_operation,
+    output psx_clk,
+    output psx_cmd,
+    output psx_att
 );
 
     wire [15:0] psx_btns;
@@ -19,20 +17,20 @@ module t_rex(
     assign n64_btns = {
         ~psx_btns[14], // 0, X -> A
         ~psx_btns[13], // 1, O -> B
-        0, // 2, Z
-        0, // 3, S
+        1'b0, // 2, Z
+        1'b0, // 3, S
         ~psx_btns[4], // 4, dU -> dU
         ~psx_btns[6], // 5, dD -> dD
         ~psx_btns[7], // 6, dL -> dL
         ~psx_btns[5], // 7, dR -> dR
-        0, // 8, ? -> Reset
-        0, // 9, ? -> ???
-        0, // 10, ? -> LT
-        0, // 11, ? -> RT
-        0, // 12, ? -> cU
-        0, // 13, ? -> cD
-        0, // 14, ? -> cL
-        0 // 15, ? -> cR
+        1'b0, // 8, ? -> Reset
+        1'b0, // 9, ? -> ???
+        1'b0, // 10, ? -> LT
+        1'b0, // 11, ? -> RT
+        1'b0, // 12, ? -> cU
+        1'b0, // 13, ? -> cD
+        1'b0, // 14, ? -> cL
+        1'b0 // 15, ? -> cR
     };
 
     n64_controller CONTROLLER
@@ -40,7 +38,8 @@ module t_rex(
         .data_rx(n64_rx),
         .sample_clk(sample_clk),
         .button_state(n64_btns),
-        .data_tx(n64_tx)
+        .data_tx(n64_tx),
+        .cur_operation(n64_cur_operation)
     );
 
     psx_console CONSOLE
