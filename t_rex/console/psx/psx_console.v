@@ -1,6 +1,6 @@
 module psx_console
 #(
-    parameter [31:0] BOOT_TIME = 16E6 // 8 seconds at 500ns per cycle
+    parameter [31:0] BOOT_TIME = 4E6 // 2 seconds at 500ns per cycle
 )
 (
     input clk,
@@ -8,7 +8,8 @@ module psx_console
     input ack,
     output reg psx_clk = 1'b1,
     output reg cmd = 1'b1,
-    output reg att = 1'b1
+    output reg att = 1'b1,
+    output button_state
 );
 
     localparam [3:0] STATE_SIZE = 4'h4;
@@ -33,7 +34,12 @@ module psx_console
     reg [31:0] time_to_wait = 0;
     reg [31:0] waited_time = 0;
     reg [7:0] bit_cnt = 8'h00;
-    reg [7:0] data_byte = 8'h00;
+    reg [7:0] unused_byte = 8'hff;
+    reg [7:0] cont_state_1 = 8'hff;
+    reg [7:0] cont_state_2 = 8'hff;
+    reg [7:0] temp_data = 8'hff;
+
+    assign button_state = {cont_state_1, cont_state_2};
 
     always @(negedge clk) begin
         case (cur_state)
@@ -74,7 +80,7 @@ module psx_console
                 cur_state <= SEND_START_CMD;
             end
             SEND_START_CMD: begin
-                tx_cmd(START_CMD, AWAIT_ACK, SEND_BEGIN_TX_CMD, 76, data_byte);
+                tx_cmd(START_CMD, AWAIT_ACK, SEND_BEGIN_TX_CMD, 76, unused_byte);
             end
             AWAIT_ACK: begin
                 if (time_to_wait == 0) begin
@@ -96,16 +102,16 @@ module psx_console
                 end
             end
             SEND_BEGIN_TX_CMD: begin
-                tx_cmd(BEGIN_TX_CMD, AWAIT_ACK, READ_PREAMBLE, 60, data_byte);
+                tx_cmd(BEGIN_TX_CMD, AWAIT_ACK, READ_PREAMBLE, 60, unused_byte);
             end
             READ_PREAMBLE: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_1, 14, data_byte);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_1, 14, unused_byte);
             end
             READ_CONT_STATE_1: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_2, 14, data_byte);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_2, 14, cont_state_1);
             end
             READ_CONT_STATE_2: begin
-                tx_cmd(NO_OP, RAISE_ATT, RAISE_ATT, 14, data_byte);
+                tx_cmd(NO_OP, RAISE_ATT, RAISE_ATT, 14, cont_state_2);
             end
             RAISE_ATT: begin
                 if (time_to_wait == 0) begin
@@ -129,7 +135,9 @@ module psx_console
                 time_to_wait <= 0;
                 waited_time <= 0;
                 bit_cnt <= 8'h00;
-                data_byte <= 8'h00;
+                unused_byte <= 8'hff;
+                cont_state_1 <= 8'hff;
+                cont_state_2 <= 8'hff;
                 cur_state <= ATT_PULSE;
                 redirect_to <= LOWER_ATT;
             end
@@ -143,6 +151,7 @@ module psx_console
         input [3:0] in_redirect_to;
         input [31:0] initial_delay;
         output reg [7:0] out_data;
+
         if (time_to_wait == 0) begin
             bit_cnt <= 8'h00;
             time_to_wait <= initial_delay + 64; // 8 bits take 64 cycles to tx
@@ -156,7 +165,7 @@ module psx_console
                         cmd <= in_cmd[bit_cnt];
                     end else if (waited_time < (initial_delay + 7 + ((bit_cnt)*8))) begin
                         if (psx_clk == 1'b0) begin
-                            out_data[bit_cnt] <= data;
+                            temp_data[bit_cnt] <= data;
                         end
 
                         psx_clk <= 1'b1;
@@ -171,6 +180,7 @@ module psx_console
                 time_to_wait <= 0;
                 waited_time <= 0;
                 bit_cnt <= 8'h00;
+                out_data <= temp_data;
             end
         end
     endtask

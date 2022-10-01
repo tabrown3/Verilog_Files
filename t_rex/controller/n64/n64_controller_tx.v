@@ -3,7 +3,7 @@ module n64_controller_tx(
     input cur_operation,
     input [7:0] cmd,
     input [7:0] crc,
-    input [1:0] btn,
+    input [15:0] button_state,
     output reg rx_handoff = 1'b0,
     output reg data_tx
 );
@@ -92,7 +92,7 @@ module n64_controller_tx(
                         cur_state <= SENDING_LEVELS;
                     end
                     8'h01: begin
-                        tx_byte_buffer <= {~btn[0], ~btn[1], {30{1'b0}}}; // STATUS - buttons/analog sticks
+                        tx_byte_buffer <= {button_state, {16{1'b0}}}; // STATUS - buttons/analog sticks
                         tx_byte_buffer_length <= 9'd32;
                         cur_state <= SENDING_LEVELS;
                     end
