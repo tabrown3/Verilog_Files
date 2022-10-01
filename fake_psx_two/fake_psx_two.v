@@ -33,7 +33,7 @@ module fake_psx_two
     reg [31:0] time_to_wait = 0;
     reg [31:0] waited_time = 0;
     reg [7:0] bit_cnt = 8'h00;
-    reg [7:0] data_byte;
+    reg [7:0] data_byte = 8'h00;
 
     always @(negedge clk) begin
         case (cur_state)
@@ -124,6 +124,14 @@ module fake_psx_two
                         end
                     end
                 end
+            end
+            default: begin
+                time_to_wait <= 0;
+                waited_time <= 0;
+                bit_cnt <= 8'h00;
+                data_byte <= 8'h00;
+                cur_state <= ATT_PULSE;
+                redirect_to <= LOWER_ATT;
             end
         endcase
     end
