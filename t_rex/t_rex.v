@@ -11,6 +11,7 @@ module t_rex(
 );
 
     wire [15:0] psx_btns;
+    wire [31:0] psx_sticks;
     wire [15:0] n64_btns;
 
     /* PSX Buttons - Digital:
@@ -89,6 +90,7 @@ module t_rex(
         .psx_clk(psx_clk),
         .cmd(psx_cmd),
         .att(psx_att),
-        .button_state(psx_btns)
+        .button_state(psx_btns),
+        .stick_state(psx_sticks)
     );
 endmodule
