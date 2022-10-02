@@ -52,9 +52,4 @@ module t_rex(
         .att(psx_att),
         .button_state(psx_btns)
     );
-
-    // Modify n64 controller to forward button polls for psx console to proxy.
-    // Modify psx console to forward controller button presses to n64.
-    // Maybe create some signal between the two for when a poll is starting
-    // and when button presses have been read and loaded.
 endmodule
