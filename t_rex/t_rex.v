@@ -16,7 +16,7 @@ module t_rex(
     // PXS controller -> N64 console mapping
     assign n64_btns = {
         ~psx_btns[1],   // 15, X -> A
-        ~psx_btns[0],   // 14, O -> B
+        ~psx_btns[2],   // 14, O -> B
         1'b0,           // 13, Z
         1'b0,           // 12, S
         ~psx_btns[11],  // 11, dU -> dU
