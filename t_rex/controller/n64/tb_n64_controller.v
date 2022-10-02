@@ -22,6 +22,10 @@ module tb_n64_controller();
         while(1) begin
             #2.5; // 250ns HIGH, 250ns LOW - 2MHz
             sample_clk = ~sample_clk;
+
+            if (!sample_clk) begin
+                button_state = $random;
+            end
         end
     end
 endmodule
