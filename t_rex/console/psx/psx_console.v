@@ -79,7 +79,7 @@ module psx_console
                 cur_state <= SEND_START_CMD;
             end
             SEND_START_CMD: begin
-                tx_cmd(START_CMD, AWAIT_ACK, SEND_BEGIN_TX_CMD, 76, unused_byte);
+                tx_cmd(START_CMD, AWAIT_ACK, SEND_BEGIN_TX_CMD, 76);
             end
             AWAIT_ACK: begin
                 if (time_to_wait == 0) begin
@@ -101,16 +101,16 @@ module psx_console
                 end
             end
             SEND_BEGIN_TX_CMD: begin
-                tx_cmd(BEGIN_TX_CMD, AWAIT_ACK, READ_PREAMBLE, 60, unused_byte);
+                tx_cmd(BEGIN_TX_CMD, AWAIT_ACK, READ_PREAMBLE, 60);
             end
             READ_PREAMBLE: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_1, 14, unused_byte);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_1, 14);
             end
             READ_CONT_STATE_1: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_2, 14, cont_state_1);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_CONT_STATE_2, 14);
             end
             READ_CONT_STATE_2: begin
-                tx_cmd(NO_OP, RAISE_ATT, RAISE_ATT, 14, cont_state_2);
+                tx_cmd(NO_OP, RAISE_ATT, RAISE_ATT, 14);
             end
             RAISE_ATT: begin
                 if (time_to_wait == 0) begin
@@ -148,8 +148,7 @@ module psx_console
         input [7:0] in_cmd,
         input [3:0] in_cur_state,
         input [3:0] in_redirect_to,
-        input [31:0] initial_delay,
-        output [7:0] out_data
+        input [31:0] initial_delay
     );  
 
         if (time_to_wait == 0) begin
@@ -165,7 +164,11 @@ module psx_console
                         cmd <= in_cmd[bit_cnt];
                     end else if (waited_time < (initial_delay + 7 + ((bit_cnt)*8))) begin
                         if (psx_clk == 1'b0) begin
-                            out_data[4'h7 - bit_cnt] <= data;
+                            if (cur_state == READ_CONT_STATE_1) begin
+                                cont_state_1[4'h7 - bit_cnt] <= data;
+                            end else if (cur_state == READ_CONT_STATE_2) begin
+                                cont_state_2[4'h7 - bit_cnt] <= data;
+                            end
                         end
 
                         psx_clk <= 1'b1;
