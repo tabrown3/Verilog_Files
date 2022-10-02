@@ -69,7 +69,20 @@ module n64_controller_tx(
         .rem(complete_crc)
     );
 
-    assign tx_byte_buffer = {{{9'd232{1'b0}}}, button_state, {16{1'b0}}};
+    // wire [15:0] bob;
+    // assign bob = ~button_state;
+    assign tx_byte_buffer = {
+        {{9'd232{1'b0}}},
+        ~button_state[1],
+        ~button_state[0],
+        1'b0,
+        1'b0,
+        ~button_state[11],
+        ~button_state[9],
+        ~button_state[8],
+        ~button_state[10],
+        {24{1'b0}}
+    };
     // always @(*) begin
         // case (cmd)
         //     8'h00, 8'hff: begin
