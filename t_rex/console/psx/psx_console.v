@@ -34,7 +34,6 @@ module psx_console
     reg [31:0] time_to_wait = 0;
     reg [31:0] waited_time = 0;
     reg [7:0] bit_cnt = 8'h00;
-    reg [7:0] unused_byte = 8'hff;
     reg [7:0] cont_state_1 = 8'hff;
     reg [7:0] cont_state_2 = 8'hff;
 
@@ -134,7 +133,6 @@ module psx_console
                 time_to_wait <= 0;
                 waited_time <= 0;
                 bit_cnt <= 8'h00;
-                unused_byte <= 8'hff;
                 cont_state_1 <= 8'hff;
                 cont_state_2 <= 8'hff;
                 cur_state <= ATT_PULSE;

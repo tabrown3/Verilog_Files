@@ -25,7 +25,8 @@ module n64_controller_tx(
     reg bit_cnt_reset = 1'b0;
     reg bit_cnt_clk = 1'b1;
     wire [8:0] bit_cnt;
-    reg [263:0] tx_byte_buffer; // 33 bytes
+    wire [263:0] tx_byte_buffer; // 33 bytes
+    reg [263:0] tx_byte_buffer_reg; // 33 bytes
     reg [8:0] tx_byte_buffer_length; // 0 to 511
     reg [BIT_WIDTH - 1:0] tx_bit_buffer;
 
@@ -68,6 +69,27 @@ module n64_controller_tx(
         .rem(complete_crc)
     );
 
+    assign tx_byte_buffer = {{{9'd232{1'b0}}}, button_state, {16{1'b0}}};
+    // always @(*) begin
+        // case (cmd)
+        //     8'h00, 8'hff: begin
+        //         tx_byte_buffer_reg = {{{9'd240{1'b0}}}, 24'h050000};
+        //     end
+        //     8'h01: begin
+                // tx_byte_buffer_reg = {{{9'd232{1'b0}}}, button_state, {16{1'b0}}};
+        //     end
+        //     8'h02: begin
+        //         tx_byte_buffer_reg = {9'd264{1'b0}};
+        //     end
+        //     8'h03: begin
+        //         tx_byte_buffer_reg = {{9'd256{1'b0}}, complete_crc};
+        //     end
+        //     default: begin
+        //         tx_byte_buffer_reg = {9'd264{1'b0}};
+        //     end
+        // endcase
+    // end
+
     // this acts as a posedge reset, making any changes to level_cnt_clk persist for half a cycle
     assign level_cnt_clk_wire = ~(level_cnt_clk ^ p_level_cnt_clk);
     assign bit_cnt_clk_wire = ~(bit_cnt_clk ^ p_bit_cnt_clk);
@@ -86,31 +108,31 @@ module n64_controller_tx(
         if (cur_operation == 1'b1) begin // Tx  
             case (cur_state)
                 PREPPING_RESPONSE: begin
-                    case (cmd)
-                        8'h00, 8'hff: begin
-                            tx_byte_buffer <= 24'h050000; // INFO - OEM controller
-                            tx_byte_buffer_length <= 9'd24;
-                            cur_state <= SENDING_LEVELS;
-                        end
-                        8'h01: begin
-                            tx_byte_buffer <= {button_state, {16{1'b0}}}; // STATUS - buttons/analog sticks
+            //         case (cmd)
+            //             8'h00, 8'hff: begin
+            //                 // tx_byte_buffer <= 24'h050000; // INFO - OEM controller
+            //                 tx_byte_buffer_length <= 9'd24;
+            //                 cur_state <= SENDING_LEVELS;
+            //             end
+            //             8'h01: begin
+                            // tx_byte_buffer <= {button_state, {16{1'b0}}}; // STATUS - buttons/analog sticks
                             tx_byte_buffer_length <= 9'd32;
                             cur_state <= SENDING_LEVELS;
-                        end
-                        8'h02: begin // READ
-                            tx_byte_buffer <= {9'd264{1'b0}}; // "0" 264 times
-                            tx_byte_buffer_length <= 9'd264;
-                            cur_state <= SENDING_LEVELS;
-                        end
-                        8'h03: begin // WRITE
-                            tx_byte_buffer_length <= 9'd8;
-                            crc_reset <= 1'b1;
-                            cur_state <= FLUSH_CRC;
-                        end
-                        default: begin
-                            rx_handoff <= ~rx_handoff;
-                        end
-                    endcase
+                    //     end
+                    //     8'h02: begin // READ
+                    //         // tx_byte_buffer <= {9'd264{1'b0}}; // "0" 264 times
+                    //         tx_byte_buffer_length <= 9'd264;
+                    //         cur_state <= SENDING_LEVELS;
+                    //     end
+                    //     8'h03: begin // WRITE
+                    //         tx_byte_buffer_length <= 9'd8;
+                    //         crc_reset <= 1'b1;
+                    //         cur_state <= FLUSH_CRC;
+                    //     end
+                    //     default: begin
+                    //         rx_handoff <= ~rx_handoff;
+                    //     end
+                    // endcase
                 end
                 SENDING_LEVELS: begin
                     if (level_cnt == 1'b0) begin
@@ -144,7 +166,7 @@ module n64_controller_tx(
                     if (crc_reset) begin
                         crc_reset <= 1'b0;
                     end else if (crc_cnt == 4'd8) begin
-                        tx_byte_buffer <= complete_crc;
+                        // tx_byte_buffer <= complete_crc;
                         cur_state <= SENDING_LEVELS;
                     end else begin
                         crc_clk <= ~crc_clk;

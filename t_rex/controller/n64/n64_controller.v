@@ -14,7 +14,7 @@ module n64_controller(
     wire tx_handoff;
     wire rx_handoff;
 
-    assign cur_operation = tx_handoff == rx_handoff ? RX : TX;
+    assign cur_operation = TX;
 
     n64_controller_rx RX0 (
         .cur_operation(cur_operation),
