@@ -15,22 +15,22 @@ module t_rex(
 
     // PXS controller -> N64 console mapping
     assign n64_btns = {
-        ~psx_btns[14], // 0, X -> A
-        ~psx_btns[13], // 1, O -> B
-        1'b0, // 2, Z
-        1'b0, // 3, S
-        ~psx_btns[4], // 4, dU -> dU
-        ~psx_btns[6], // 5, dD -> dD
-        ~psx_btns[7], // 6, dL -> dL
-        ~psx_btns[5], // 7, dR -> dR
-        1'b0, // 8, ? -> Reset
-        1'b0, // 9, ? -> ???
-        1'b0, // 10, ? -> LT
-        1'b0, // 11, ? -> RT
-        1'b0, // 12, ? -> cU
-        1'b0, // 13, ? -> cD
-        1'b0, // 14, ? -> cL
-        1'b0 // 15, ? -> cR
+        ~psx_btns[1],   // 15, X -> A
+        ~psx_btns[0],   // 14, O -> B
+        1'b0,           // 13, Z
+        1'b0,           // 12, S
+        ~psx_btns[11],  // 11, dU -> dU
+        ~psx_btns[9],   // 10, dD -> dD
+        ~psx_btns[8],   // 9, dL -> dL
+        ~psx_btns[10],  // 8, dR -> dR
+        1'b0,           // 7, ? -> Reset
+        1'b0,           // 6, ? -> ???
+        1'b0,           // 5, ? -> LT
+        1'b0,           // 4, ? -> RT
+        1'b0,           // 3, ? -> cU
+        1'b0,           // 2, ? -> cD
+        1'b0,           // 1, ? -> cL
+        1'b0            // 0, ? -> cR
     };
 
     n64_controller CONTROLLER
