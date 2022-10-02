@@ -37,7 +37,6 @@ module psx_console
     reg [7:0] unused_byte = 8'hff;
     reg [7:0] cont_state_1 = 8'hff;
     reg [7:0] cont_state_2 = 8'hff;
-    reg [7:0] temp_data = 8'hff;
 
     assign button_state = {cont_state_1, cont_state_2};
 
@@ -145,12 +144,13 @@ module psx_console
     end
 
     // 8 bits take 64 cycles to tx
-    task tx_cmd;
-        input [7:0] in_cmd;
-        input [3:0] in_cur_state;
-        input [3:0] in_redirect_to;
-        input [31:0] initial_delay;
-        output reg [7:0] out_data;
+    task tx_cmd(
+        input [7:0] in_cmd,
+        input [3:0] in_cur_state,
+        input [3:0] in_redirect_to,
+        input [31:0] initial_delay,
+        output [7:0] out_data
+    );  
 
         if (time_to_wait == 0) begin
             bit_cnt <= 8'h00;
@@ -165,7 +165,7 @@ module psx_console
                         cmd <= in_cmd[bit_cnt];
                     end else if (waited_time < (initial_delay + 7 + ((bit_cnt)*8))) begin
                         if (psx_clk == 1'b0) begin
-                            temp_data[4'h7 - bit_cnt] <= data;
+                            out_data[4'h7 - bit_cnt] <= data;
                         end
 
                         psx_clk <= 1'b1;
@@ -180,7 +180,6 @@ module psx_console
                 time_to_wait <= 0;
                 waited_time <= 0;
                 bit_cnt <= 8'h00;
-                out_data <= temp_data;
             end
         end
     endtask

@@ -22,6 +22,10 @@ module tb_psx_console();
     always begin
         #2.5; // 250ns HIGH, 250ns LOW - 2MHz
         clk = ~clk;
+
+        if (!clk) begin
+            data = $random;
+        end
     end
 
     initial begin
