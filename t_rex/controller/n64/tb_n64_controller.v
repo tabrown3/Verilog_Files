@@ -5,12 +5,15 @@ module tb_n64_controller();
     import_n64_data N640(.data(console_data));
 
     reg sample_clk;
+    reg [15:0] button_state = 16'h0000;
     wire controller_data;
+    wire cur_operation;
     n64_controller N64_CONT0(
         .data_rx(console_data),
         .sample_clk(sample_clk),
-        .btn(2'b00),
-        .data_tx(controller_data)
+        .button_state(button_state),
+        .data_tx(controller_data),
+        .cur_operation(cur_operation)
     );
 
     initial begin

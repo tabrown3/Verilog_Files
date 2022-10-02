@@ -6,6 +6,7 @@ module tb_psx_console();
     wire psx_clk;
     wire cmd;
     wire att;
+    wire [15:0] button_state;
 
     psx_console #(.BOOT_TIME(10E4)) PSX0
     (
@@ -14,7 +15,8 @@ module tb_psx_console();
         .ack(ack),
         .psx_clk(psx_clk),
         .cmd(cmd),
-        .att(att)
+        .att(att),
+        .button_state(button_state)
     );
 
     always begin
