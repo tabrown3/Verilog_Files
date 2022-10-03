@@ -76,7 +76,7 @@ module t_rex(
 
     assign n64_stick = {
         psx_sticks[15:8] + 8'h80,
-        psx_sticks[7:0] + 8'h80
+        8'h7f - psx_sticks[7:0]
     };
 
     n64_controller CONTROLLER
