@@ -195,7 +195,7 @@ module psx_console
                                 stick_state_ry[4'h7 - bit_cnt] <= data;
                             end else if (cur_state == READ_STICK_STATE_LX) begin
                                 stick_state_lx[4'h7 - bit_cnt] <= data;
-                            end else if (cur_state == READ_STICK_STATE_LX) begin
+                            end else if (cur_state == READ_STICK_STATE_LY) begin
                                 stick_state_ly[4'h7 - bit_cnt] <= data;
                             end
                         end
