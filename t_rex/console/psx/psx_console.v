@@ -42,10 +42,10 @@ module psx_console
     reg [7:0] bit_cnt = 8'h00;
     reg [7:0] btn_state_1 = 8'hff;
     reg [7:0] btn_state_2 = 8'hff;
-    reg [7:0] stick_state_rx = 8'h77;
-    reg [7:0] stick_state_ry = 8'h77;
-    reg [7:0] stick_state_lx = 8'h77;
-    reg [7:0] stick_state_ly = 8'h77;
+    reg [7:0] stick_state_rx = 8'h80;
+    reg [7:0] stick_state_ry = 8'h80;
+    reg [7:0] stick_state_lx = 8'h80;
+    reg [7:0] stick_state_ly = 8'h80;
 
     assign button_state = {btn_state_1, btn_state_2};
     assign stick_state = {stick_state_rx, stick_state_ry, stick_state_lx, stick_state_ly};
@@ -190,13 +190,13 @@ module psx_console
                             end else if (cur_state == READ_BTN_STATE_2) begin
                                 btn_state_2[4'h7 - bit_cnt] <= data;
                             end else if (cur_state == READ_STICK_STATE_RX) begin
-                                stick_state_rx[4'h7 - bit_cnt] <= data;
+                                stick_state_rx[bit_cnt] <= data;
                             end else if (cur_state == READ_STICK_STATE_RY) begin
-                                stick_state_ry[4'h7 - bit_cnt] <= data;
+                                stick_state_ry[bit_cnt] <= data;
                             end else if (cur_state == READ_STICK_STATE_LX) begin
-                                stick_state_lx[4'h7 - bit_cnt] <= data;
+                                stick_state_lx[bit_cnt] <= data;
                             end else if (cur_state == READ_STICK_STATE_LY) begin
-                                stick_state_ly[4'h7 - bit_cnt] <= data;
+                                stick_state_ly[bit_cnt] <= data;
                             end
                         end
 
