@@ -2,6 +2,7 @@ module n64_controller(
     input data_rx,
     input sample_clk,
     input [15:0] button_state,
+    input [15:0] stick_state,
     output data_tx,
     output cur_operation
 );
@@ -32,6 +33,7 @@ module n64_controller(
         .cmd(cmd),
         .crc(crc),
         .button_state(button_state),
+        .stick_state(stick_state),
         .rx_handoff(rx_handoff),
         .data_tx(data_tx)
     );

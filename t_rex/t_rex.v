@@ -13,6 +13,7 @@ module t_rex(
     wire [15:0] psx_btns;
     wire [31:0] psx_sticks;
     wire [15:0] n64_btns;
+    wire [15:0] n64_stick;
 
     /* PSX Buttons - Digital:
         15      14      13      12      11      10      9       8
@@ -73,11 +74,17 @@ module t_rex(
         ~psx_btns[10]   // 0, dR -> cR
     };
 
+    assign n64_stick = {
+        psx_sticks[15:8] + 8'h80,
+        psx_sticks[7:0] + 8'h80
+    };
+
     n64_controller CONTROLLER
     (
         .data_rx(n64_rx),
         .sample_clk(sample_clk),
         .button_state(n64_btns),
+        .stick_state(n64_stick),
         .data_tx(n64_tx),
         .cur_operation(n64_cur_operation)
     );
