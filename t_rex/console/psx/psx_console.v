@@ -114,25 +114,25 @@ module psx_console
                 tx_cmd(BEGIN_TX_CMD, AWAIT_ACK, READ_PREAMBLE, 60);
             end
             READ_PREAMBLE: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_BTN_STATE_1, 14);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_BTN_STATE_1, 24);
             end
             READ_BTN_STATE_1: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_BTN_STATE_2, 14);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_BTN_STATE_2, 24);
             end
             READ_BTN_STATE_2: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_STICK_STATE_RX, 14);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_STICK_STATE_RX, 24);
             end
             READ_STICK_STATE_RX: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_STICK_STATE_RY, 14);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_STICK_STATE_RY, 24);
             end
             READ_STICK_STATE_RY: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_STICK_STATE_LX, 14);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_STICK_STATE_LX, 24);
             end
             READ_STICK_STATE_LX: begin
-                tx_cmd(NO_OP, AWAIT_ACK, READ_STICK_STATE_LY, 14);
+                tx_cmd(NO_OP, AWAIT_ACK, READ_STICK_STATE_LY, 24);
             end
             READ_STICK_STATE_LY: begin
-                tx_cmd(NO_OP, RAISE_ATT, RAISE_ATT, 14);
+                tx_cmd(NO_OP, RAISE_ATT, RAISE_ATT, 24);
             end
             RAISE_ATT: begin
                 if (time_to_wait == 0) begin
