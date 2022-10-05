@@ -156,8 +156,6 @@ module psx_console
                 time_to_wait <= 0;
                 waited_time <= 0;
                 bit_cnt <= 8'h00;
-                btn_state_1 <= 8'hff;
-                btn_state_2 <= 8'hff;
                 cur_state <= ATT_PULSE;
                 redirect_to <= LOWER_ATT;
             end
