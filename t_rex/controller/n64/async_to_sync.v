@@ -1,10 +1,11 @@
 `include "../../common/n_bit_counter.v"
 module async_to_sync(
+    input read_ack,
     input cur_operation,
     input data,
     input sample_clk,
     output reg derived_signal = 1'b1,
-    output derived_clk,
+    output reg derived_clk = 1'b1,
     output reg tx_handoff = 1'b0
 );
     localparam STATE_SIZE = 4; // bits
@@ -25,8 +26,6 @@ module async_to_sync(
     reg [5:0] low_cnt_latch = 6'h00;
 
     reg [STATE_SIZE-1:0] next_state = AWAITING_FIRST_BIT;
-    reg derived_clk_reg = 1'b1;
-    reg p_derived_clk = 1'b1;
 
     n_bit_counter LOW_CNT0(.clk(low_cnt_clk), .reset(reset_low_cnt), .count(low_cnt));
     n_bit_counter HIGH_CNT0(.clk(high_cnt_clk), .reset(reset_high_cnt), .count(high_cnt));
@@ -34,14 +33,14 @@ module async_to_sync(
     assign low_cnt_clk = cur_state == READING_BIT_LOW ? sample_clk : 1'b1;
     assign high_cnt_clk = cur_state == READING_BIT_HIGH ? sample_clk : 1'b1;
 
-    assign derived_clk = ~(derived_clk_reg^p_derived_clk);
     always @(posedge sample_clk) begin
         cur_state <= next_state;
-        p_derived_clk <= derived_clk_reg;
     end
 
-    always @(negedge sample_clk) begin
-        if (cur_operation == 1'b0) begin // Rx
+    always @(negedge sample_clk or posedge read_ack) begin
+        if (read_ack) begin
+            derived_clk <= 1'b1;
+        end else if (cur_operation == 1'b0) begin // Rx
             case (cur_state)
                 AWAITING_FIRST_BIT: begin
                     if (!data) begin
@@ -64,7 +63,7 @@ module async_to_sync(
                         reset_low_cnt <= 1'b0;
                         next_state <= READING_BIT_LOW;
 
-                        derived_clk_reg <= ~derived_clk_reg;
+                        derived_clk <= 1'b0;
                         reset_high_cnt <= 1'b1;
                         if (low_cnt_latch > high_cnt) begin
                             derived_signal <= 1'b0;
@@ -76,8 +75,7 @@ module async_to_sync(
                         reset_high_cnt <= 1'b1;
                         low_cnt_latch <= 6'h00;
 
-                        derived_signal <= 1'b1;
-                        derived_clk_reg <= ~derived_clk_reg;
+                        derived_clk <= 1'b0;
                         
                         tx_handoff <= ~tx_handoff;
                         next_state <= AWAITING_FIRST_BIT;
