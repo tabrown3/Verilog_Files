@@ -4,7 +4,7 @@ module n64_controller_rx
     input data_rx,
     input sample_clk,
     output tx_handoff,
-    output reg [7:0] cmd = 8'h00,
+    output [7:0] cmd,
     output reg [15:0] address = 16'h0000,
     output reg [7:0] crc
 );
@@ -50,6 +50,8 @@ module n64_controller_rx
         .rem(rem)
     );
 
+    assign cmd = inner_cmd;
+
     assign bit_cnt_reset_wire = (bit_cnt_reset^p_bit_cnt_reset) | cur_operation;
     assign crc_reset_wire = (crc_reset^p_crc_reset) | cur_operation;
     assign read_ack_wire = (read_ack^p_read_ack);
@@ -67,16 +69,12 @@ module n64_controller_rx
                     case (inner_cmd)
                         8'h00, 8'h01, 8'hff: begin // INFO, BUTTON STATUS, RESET
                             bit_cnt_reset <= ~bit_cnt_reset;
-                            cmd <= inner_cmd;
-                            inner_cmd <= 8'h00;
                         end
                         8'h02: begin // READ
                             if (bit_cnt < 9'd24) begin
                                 address[6'd23 - bit_cnt] <= derived_signal;
                             end else begin
                                 bit_cnt_reset <= ~bit_cnt_reset;
-                                cmd <= inner_cmd;
-                                inner_cmd <= 8'h00;
                             end
                         end
                         8'h03: begin // WRITE
@@ -91,14 +89,11 @@ module n64_controller_rx
                             end else if (bit_cnt == 9'd280) begin
                                 crc <= rem;
                                 bit_cnt_reset <= ~bit_cnt_reset;
-                                cmd <= inner_cmd;
-                                inner_cmd <= 8'h00;
                                 crc_reset <= ~crc_reset;
                             end
                         end
                         default: begin
                             inner_cmd <= 8'h00;
-                            cmd <= 8'h00;
                         end
                     endcase
                 end else begin
