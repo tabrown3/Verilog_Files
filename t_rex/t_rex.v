@@ -82,8 +82,8 @@ module t_rex(
 
     // create dead-zone where analog sticks won't cause movement
     assign padded_n64_stick = {
-        psx_sticks[15:8] > 8'h8a || psx_sticks[15:8] < 8'h76 ? n64_stick[15:8] : 8'h00,
-        psx_sticks[7:0] > 8'h8a || psx_sticks[7:0] < 8'h76 ? n64_stick[7:0] : 8'h00
+        psx_sticks[15:8] > 8'h8f || psx_sticks[15:8] < 8'h71 ? n64_stick[15:8] : 8'h00,
+        psx_sticks[7:0] > 8'h8f || psx_sticks[7:0] < 8'h71 ? n64_stick[7:0] : 8'h00
     };
 
     n64_controller CONTROLLER
