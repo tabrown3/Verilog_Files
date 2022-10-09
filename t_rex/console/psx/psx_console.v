@@ -168,9 +168,18 @@ module psx_console
         input [3:0] in_cur_state,
         input [3:0] in_redirect_to,
         input [31:0] initial_delay
-    );  
-
-        if (time_to_wait == 0) begin
+    );
+        // Don't know why AWAIT_ACK occassionally redirects to the wrong
+        //  state, but this will check for that condition and correct
+        if (cur_state >= SEND_BEGIN_TX_CMD && cur_state != redirect_to) begin
+            // TODO: consider just redirecting to redirect_to instead
+            //  of resetting to ATT_PULSE -> LOWER_ATT
+            time_to_wait <= 0;
+            waited_time <= 0;
+            bit_cnt <= 8'h00;
+            cur_state <= ATT_PULSE;
+            redirect_to <= LOWER_ATT;
+        end else if (time_to_wait == 0) begin
             bit_cnt <= 8'h00;
             time_to_wait <= initial_delay + 64; // 8 bits take 64 cycles to tx
             waited_time <= 0;
