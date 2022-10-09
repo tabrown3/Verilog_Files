@@ -7,6 +7,7 @@ module tb_psx_console();
     wire cmd;
     wire att;
     wire [15:0] button_state;
+    integer i = 0;
 
     psx_console #(.BOOT_TIME(10E4)) PSX0
     (
@@ -30,6 +31,8 @@ module tb_psx_console();
 
     initial begin
         #(50E4+(32E3*5));
+
+        // FIRST
         #900;
         ack = 1'b0;
         #6;
@@ -69,6 +72,48 @@ module tb_psx_console();
         ack = 1'b0;
         #6;
         ack = 1'b1;
+
+        for (i=0; i<6; i = i + 1) begin
+            #162620;
+            ack = 1'b0;
+            #6;
+            ack = 1'b1;
+
+            #700;
+            ack = 1'b0;
+            #6;
+            ack = 1'b1;
+
+            #480;
+            ack = 1'b0;
+            #6;
+            ack = 1'b1;
+
+            #480;
+            ack = 1'b0;
+            #6;
+            ack = 1'b1;
+
+            #480;
+            ack = 1'b0;
+            #6;
+            ack = 1'b1;
+
+            #480;
+            ack = 1'b0;
+            #6;
+            ack = 1'b1;
+
+            #480;
+            ack = 1'b0;
+            #6;
+            ack = 1'b1;
+
+            #480;
+            ack = 1'b0;
+            #6;
+            ack = 1'b1;
+        end
     end
 
     initial begin
