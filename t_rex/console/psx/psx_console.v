@@ -46,6 +46,7 @@ module psx_console
     reg [7:0] stick_state_ry = 8'h80;
     reg [7:0] stick_state_lx = 8'h80;
     reg [7:0] stick_state_ly = 8'h80;
+    reg first_run = 1'b1;
 
     assign button_state = {btn_state_1, btn_state_2};
     assign stick_state = {stick_state_rx, stick_state_ry, stick_state_lx, stick_state_ly};
@@ -158,6 +159,7 @@ module psx_console
                 bit_cnt <= 8'h00;
                 cur_state <= ATT_PULSE;
                 redirect_to <= LOWER_ATT;
+                first_run <= 1'b1;
             end
         endcase
     end
@@ -179,10 +181,12 @@ module psx_console
             bit_cnt <= 8'h00;
             cur_state <= ATT_PULSE;
             redirect_to <= LOWER_ATT;
-        end else if (time_to_wait == 0) begin
+            first_run <= 1'b1;
+        end else if (first_run) begin
             bit_cnt <= 8'h00;
             time_to_wait <= initial_delay + 64; // 8 bits take 64 cycles to tx
             waited_time <= 0;
+            first_run <= 1'b0;
         end else begin
             if(waited_time < time_to_wait) begin
                 waited_time <= waited_time + 1;
@@ -219,6 +223,7 @@ module psx_console
                 time_to_wait <= 0;
                 waited_time <= 0;
                 bit_cnt <= 8'h00;
+                first_run <= 1'b1;
             end
         end
     endtask
