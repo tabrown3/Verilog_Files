@@ -49,6 +49,26 @@ module tb_psx_console();
         ack = 1'b0;
         #6;
         ack = 1'b1;
+
+        #480;
+        ack = 1'b0;
+        #6;
+        ack = 1'b1;
+
+        #480;
+        ack = 1'b0;
+        #6;
+        ack = 1'b1;
+
+        #480;
+        ack = 1'b0;
+        #6;
+        ack = 1'b1;
+
+        #480;
+        ack = 1'b0;
+        #6;
+        ack = 1'b1;
     end
 
     initial begin
