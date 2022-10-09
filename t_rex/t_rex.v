@@ -13,8 +13,11 @@ module t_rex(
     wire [15:0] psx_btns;
     wire [31:0] psx_sticks;
     wire [15:0] n64_btns;
-    wire [15:0] n64_stick;
+    wire [7:0] n64_stick_x;
+    wire [7:0] n64_stick_y;
     wire [15:0] padded_n64_stick;
+    wire [7:0] single_stick_x;
+    wire [7:0] single_stick_y;
 
     /* PSX Buttons - Digital:
         15      14      13      12      11      10      9       8
@@ -58,7 +61,7 @@ module t_rex(
     // PXS controller -> N64 console mapping
     assign n64_btns = {
         ~psx_btns[1],   // 15, X -> A
-        ~psx_btns[2],   // 14, O -> B
+        (~psx_btns[2] | ~psx_btns[0]),   // 14, O or |_| -> B
         ~psx_btns[6],   // 13, R2 -> Z
         ~psx_btns[12],  // 12, Start -> S
         1'b0,           // 11, ? -> dU
@@ -68,22 +71,26 @@ module t_rex(
         1'b0,           // 7, ? -> Reset
         1'b0,           // 6, ? -> ???
         ~psx_btns[5],   // 5, L1 -> LT
-        ~psx_btns[4],   // 4, R1 -> RT
+        (~psx_btns[4] | ~psx_btns[7]),   // 4, R1 or L2 -> RT
         ~psx_btns[11],  // 3, dU -> cU
         ~psx_btns[9],   // 2, dD -> cD
         ~psx_btns[8],   // 1, dL -> cL
         ~psx_btns[10]   // 0, dR -> cR
     };
 
-    assign n64_stick = {
-        psx_sticks[15:8] + 8'h80,
-        8'h7f - psx_sticks[7:0]
-    };
+    // if L2 held down, switch to R-stick, else L-stick
+    assign single_stick_x = ~psx_btns[7] ? psx_sticks[31:24] : psx_sticks[15:8];
+    assign single_stick_y = ~psx_btns[7] ? psx_sticks[23:16] : psx_sticks[7:0];
+
+    // transform to two's complement
+    assign n64_stick_x = single_stick_x + 8'h80;
+    // two's complement with inverted y-axis
+    assign n64_stick_y = 8'h7f - single_stick_y;
 
     // create dead-zone where analog sticks won't cause movement
     assign padded_n64_stick = {
-        psx_sticks[15:8] > 8'h8f || psx_sticks[15:8] < 8'h71 ? n64_stick[15:8] : 8'h00,
-        psx_sticks[7:0] > 8'h8f || psx_sticks[7:0] < 8'h71 ? n64_stick[7:0] : 8'h00
+        single_stick_x > 8'h90 || single_stick_x < 8'h70 ? n64_stick_x : 8'h00,
+        single_stick_y > 8'h90 || single_stick_y < 8'h70 ? n64_stick_y : 8'h00
     };
 
     n64_controller CONTROLLER
