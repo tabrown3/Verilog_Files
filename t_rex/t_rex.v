@@ -1,3 +1,17 @@
+/*
+    Pin mapping for DE0-nano (all pins for GPIO1):
+
+    n64_rx/n64_tx     pin 39 -> B
+    psx_ack           pin 31 -> G
+    3.3v              pin 29 -> M
+    psx_clk           pin 17 -> N
+    psx_att           pin 15 -> O
+    5v                pin 11 -> P
+    GND               pin 12 -> Q
+    psx_cmd           pin 9  -> R
+    psx_data          pin 7  -> T
+*/
+
 module t_rex(
     input sample_clk,
     input psx_data,
